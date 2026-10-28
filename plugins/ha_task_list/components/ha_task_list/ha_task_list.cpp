@@ -41,13 +41,10 @@ void TaskTile::create(const tessera::TileContext &c) {
 void TaskTile::on_state(JsonObjectConst data) {
   tasks_.clear();
 
-  ESP_LOGI(TAG, "on_state() ontvangen voor %s!", entity_.c_str());
-
-  if (data.isNull()) {
-    ESP_LOGW(TAG, "on_state payload is NULL!");
-    update_rows();
-    return;
-  }
+  // Print de exacte JSON-inhoud naar de ESPHome log
+  std::string raw_json;
+  serializeJson(data, raw_json);
+  ESP_LOGI(TAG, "Raw payload ontvangen: %s", raw_json.c_str());
 
   // Haal items op uit de root of uit attributes
   JsonArrayConst items = data["items"].as<JsonArrayConst>();
@@ -79,6 +76,7 @@ void TaskTile::on_state(JsonObjectConst data) {
 
   update_rows();
 }
+
 
 void TaskTile::update_rows() {
   ESP_LOGD(TAG, "update_rows() getekend met %d taken", static_cast<int>(tasks_.size()));
