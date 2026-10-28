@@ -2,7 +2,6 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/api/custom_api_device.h"
-#include "esphome/components/http_request/http_request.h"
 #include "tessera.h"
 #include <vector>
 #include <string>

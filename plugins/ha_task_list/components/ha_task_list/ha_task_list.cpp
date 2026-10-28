@@ -1,6 +1,5 @@
 #include "ha_task_list.h"
 #include "esphome/core/log.h"
-#include "esphome/components/network/util.h"
 #include <cstring>
 
 namespace esphome::ha_task_list {
@@ -22,24 +21,20 @@ void TaskTile::create(const tessera::TileContext &c) {
   for (int i = 0; i < MAX_ROWS; ++i) {
     int y_pos = i * row_h;
 
-    // Klikbare container voor de hele rij
     rows_[i].container = lv_obj_create(c.parent);
     lv_obj_set_pos(rows_[i].container, 0, y_pos);
     lv_obj_set_size(rows_[i].container, width_, row_h);
     lv_obj_set_style_bg_opa(rows_[i].container, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(rows_[i].container, 0, 0);
     lv_obj_clear_flag(rows_[i].container, LV_OBJ_FLAG_SCROLLABLE);
-    
-    // Koppel rij-index en click callback
+
     lv_obj_set_user_data(rows_[i].container, reinterpret_cast<void *>(uintptr_t(i)));
     lv_obj_add_event_cb(rows_[i].container, TaskTile::on_row_click, LV_EVENT_CLICKED, this);
 
-    // Checkbox indicator
     rows_[i].checkbox = tessera::ui::label(rows_[i].container, tessera::Font::BODY, theme::MUTED);
     lv_obj_set_pos(rows_[i].checkbox, 6, (row_h - 20) / 2);
     tessera::ui::set_text(rows_[i].checkbox, "");
 
-    // Taaktekst
     rows_[i].label = tessera::ui::label(rows_[i].container, tessera::Font::BODY, theme::INK);
     lv_obj_set_pos(rows_[i].label, 32, (row_h - 20) / 2);
     lv_obj_set_width(rows_[i].label, width_ - 38);
@@ -63,11 +58,9 @@ void TaskTile::on_row_click(lv_event_t *e) {
 void TaskTile::toggle_item(size_t index) {
   if (index >= tasks_.size()) return;
 
-  // 1. Direct visuele toggle toepassen op scherm voor snelle feedback
   tasks_[index].completed = !tasks_[index].completed;
   update_rows();
 
-  // 2. Direct HA Service Call sturen om status in Home Assistant aan te passen
   std::map<std::string, std::string> data;
   data["entity_id"] = entity_;
   data["item"] = tasks_[index].text;
@@ -80,7 +73,6 @@ void TaskTile::toggle_item(size_t index) {
 void TaskTile::fetch_todo_items() {
   if (entity_.empty()) return;
 
-  // Stuur service call om items te verversen (HA vuurt direct een state-event af)
   std::map<std::string, std::string> data;
   data["entity_id"] = entity_;
   call_homeassistant_service("todo.get_items", data);
@@ -100,7 +92,6 @@ void TaskTile::on_state(JsonObjectConst data) {
     }
   }
 
-  // Uitlezen van items direct uit state update
   JsonArrayConst items = data["items"].as<JsonArrayConst>();
   if (items.isNull() && entity_obj["items"].is<JsonArrayConst>()) {
     items = entity_obj["items"].as<JsonArrayConst>();
@@ -117,7 +108,7 @@ void TaskTile::on_state(JsonObjectConst data) {
       t.text = item["summary"] | item["text"] | "";
       const char *status = item["status"] | "";
       t.completed = (strcmp(status, "completed") == 0) || (item["completed"] | false);
-      
+
       if (!t.text.empty()) {
         tasks_.push_back(t);
       }
