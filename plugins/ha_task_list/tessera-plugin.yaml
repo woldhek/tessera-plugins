@@ -25,4 +25,5 @@ permissions:
     - todo.update_item
     - todo.add_item
     - todo.remove_item
-
+  ha_commands:
+    - "call_service:todo.get_items"

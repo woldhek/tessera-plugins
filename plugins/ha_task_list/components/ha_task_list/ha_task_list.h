@@ -1,12 +1,13 @@
 #pragma once
 
 #include "esphome/core/component.h"
-#include "esphome/components/api/custom_api_device.h"
 #include "esphome/components/smart_display/plugin_api.h"
 #include <vector>
 #include <string>
 
 namespace esphome::ha_task_list {
+
+class TaskTile;
 
 struct TaskItem {
   std::string uid;
@@ -14,9 +15,10 @@ struct TaskItem {
   bool completed{false};
 };
 
-class TaskTile : public tessera::Tile, public api::CustomAPIDevice {
+class TaskTile : public tessera::Tile {
  public:
-  explicit TaskTile(const tessera::Plugin *plugin) : plugin_(plugin) {}
+  explicit TaskTile(const tessera::Plugin *plugin);
+  ~TaskTile() override;
 
   void create(const tessera::TileContext &c) override;
   void on_state(JsonObjectConst data) override;
@@ -24,8 +26,9 @@ class TaskTile : public tessera::Tile, public api::CustomAPIDevice {
   void on_theme() override;
   void on_tap() override;
 
-  void fetch_todo_items();
-  void toggle_next_item();
+  void ask_items();
+  void handle_response(uint32_t req_id, JsonObjectConst data);
+  uint32_t current_req_id() const { return asked_req_id_; }
 
  private:
   void update_rows();
@@ -36,6 +39,7 @@ class TaskTile : public tessera::Tile, public api::CustomAPIDevice {
   std::string entity_;
   std::string name_;
 
+  uint32_t asked_req_id_{0};
   std::vector<TaskItem> tasks_;
 
   struct Row {
@@ -51,6 +55,14 @@ class HaTaskList : public Component, public tessera::Plugin {
  public:
   void setup() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
+
+  void register_tile(TaskTile *tile);
+  void unregister_tile(TaskTile *tile);
+
+  void on_message(JsonObjectConst data) override;
+
+ private:
+  std::vector<TaskTile *> active_tiles_;
 };
 
 }  // namespace esphome::ha_task_list

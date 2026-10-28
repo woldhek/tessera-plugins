@@ -5,9 +5,52 @@
 namespace esphome::ha_task_list {
 
 static const char *const TAG = "ha_task_list";
+static HaTaskList *g_plugin_instance = nullptr;
+
+// --- Plugin Implementation ---
 
 void HaTaskList::setup() {
+  g_plugin_instance = this;
   add_tile("tasks", [this]() { return new TaskTile(this); });
+}
+
+void HaTaskList::register_tile(TaskTile *tile) {
+  active_tiles_.push_back(tile);
+}
+
+void HaTaskList::unregister_tile(TaskTile *tile) {
+  for (auto it = active_tiles_.begin(); it != active_tiles_.end(); ++it) {
+    if (*it == tile) {
+      active_tiles_.erase(it);
+      break;
+    }
+  }
+}
+
+void HaTaskList::on_message(JsonObjectConst data) {
+  if (data["re"].is<uint32_t>()) {
+    uint32_t req_id = data["re"].as<uint32_t>();
+    for (auto *tile : active_tiles_) {
+      if (tile->current_req_id() == req_id) {
+        tile->handle_response(req_id, data);
+        break;
+      }
+    }
+  }
+}
+
+// --- Tile Implementation ---
+
+TaskTile::TaskTile(const tessera::Plugin *plugin) : plugin_(plugin) {
+  if (g_plugin_instance) {
+    g_plugin_instance->register_tile(this);
+  }
+}
+
+TaskTile::~TaskTile() {
+  if (g_plugin_instance) {
+    g_plugin_instance->unregister_tile(this);
+  }
 }
 
 void TaskTile::create(const tessera::TileContext &c) {
@@ -32,57 +75,32 @@ void TaskTile::create(const tessera::TileContext &c) {
     tessera::ui::set_text(rows_[i].label, "");
   }
 
-  fetch_todo_items();
+  ask_items();
 }
 
-void TaskTile::toggle_next_item() {
-  for (size_t i = 0; i < tasks_.size(); ++i) {
-    if (!tasks_[i].completed) {
-      tasks_[i].completed = true;
-      update_rows();
+void TaskTile::ask_items() {
+  if (entity_.empty() || !plugin_) return;
 
-      std::map<std::string, std::string> data;
-      data["entity_id"] = entity_;
-      data["item"] = tasks_[i].text;
-      data["status"] = "completed";
+  DynamicJsonDocument doc(512);
+  doc["ask"] = "call_service:todo.get_items";
+  JsonObject d = doc.createNestedObject("data");
+  d["entity_id"] = entity_;
 
-      ESP_LOGI(TAG, "Toggling task '%s' to completed", tasks_[i].text.c_str());
-      call_homeassistant_service("todo.update_item", data);
-      return;
-    }
-  }
-
-  fetch_todo_items();
-}
-
-void TaskTile::fetch_todo_items() {
-  if (entity_.empty()) return;
-
-  std::map<std::string, std::string> data;
-  data["entity_id"] = entity_;
-  call_homeassistant_service("todo.get_items", data);
+  asked_req_id_ = tessera::send(plugin_, doc.as<JsonObjectConst>());
 }
 
 void TaskTile::on_state(JsonObjectConst data) {
+  ask_items();
+}
+
+void TaskTile::handle_response(uint32_t req_id, JsonObjectConst data) {
+  if (req_id != asked_req_id_) return;
+
   tasks_.clear();
 
-  JsonObjectConst entity_obj = data;
-  if (data["entities"].is<JsonObjectConst>()) {
-    JsonObjectConst entities = data["entities"].as<JsonObjectConst>();
-    for (JsonPairConst kv : entities) {
-      if (kv.value().is<JsonObjectConst>()) {
-        entity_obj = kv.value().as<JsonObjectConst>();
-        break;
-      }
-    }
-  }
-
-  JsonArrayConst items = data["items"].as<JsonArrayConst>();
-  if (items.isNull() && entity_obj["items"].is<JsonArrayConst>()) {
-    items = entity_obj["items"].as<JsonArrayConst>();
-  }
-  if (items.isNull() && entity_obj["attributes"].is<JsonObjectConst>()) {
-    items = entity_obj["attributes"]["items"].as<JsonArrayConst>();
+  JsonArrayConst items = data["response"][entity_.c_str()]["items"].as<JsonArrayConst>();
+  if (items.isNull()) {
+    items = data["items"].as<JsonArrayConst>();
   }
 
   if (!items.isNull()) {
@@ -90,6 +108,7 @@ void TaskTile::on_state(JsonObjectConst data) {
       if (static_cast<int>(tasks_.size()) >= MAX_ROWS) break;
 
       TaskItem t;
+      t.uid = item["uid"] | item["summary"] | "";
       t.text = item["summary"] | item["text"] | "";
       const char *status = item["status"] | "";
       t.completed = (strcmp(status, "completed") == 0) || (item["completed"] | false);
@@ -118,10 +137,28 @@ void TaskTile::update_rows() {
 }
 
 void TaskTile::on_tap() {
-  toggle_next_item();
+  for (size_t i = 0; i < tasks_.size(); ++i) {
+    if (!tasks_[i].completed) {
+      tasks_[i].completed = true;
+      update_rows();
+
+      DynamicJsonDocument doc(256);
+      doc["item"] = tasks_[i].text;
+      doc["status"] = "completed";
+
+      tessera::action("todo.update_item", entity_.c_str(), doc.as<JsonObjectConst>());
+      return;
+    }
+  }
+
+  ask_items();
 }
 
-void TaskTile::on_tick(uint32_t epoch) {}
+void TaskTile::on_tick(uint32_t epoch) {
+  if (epoch % 60 == 0) {
+    ask_items();
+  }
+}
 
 void TaskTile::on_theme() {
   for (int i = 0; i < MAX_ROWS; ++i) {
