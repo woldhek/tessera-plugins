@@ -79,6 +79,8 @@ void TaskTile::create(const tessera::TileContext &c) {
   if (entity_.empty()) {
     ESP_LOGW(TAG, "TaskTile::create - entity is leeg!");
     tessera::ui::set_text(rows_[0].label, "Geen entiteit gekoppeld");
+  } else {
+    ask_items();
   }
 }
 

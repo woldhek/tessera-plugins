@@ -17,7 +17,7 @@ tiles:
     sizes: { min: 1x1, max: 3x4 }
     memory: 1500
     options:
-      - { id: entity, kind: entity, label: todo_entity, hint: select_todo_entity, domains: [todo] }
+    domains: [todo]
 
 permissions:
   read_entities: [todo]
