@@ -28,6 +28,7 @@ void HaTaskList::unregister_tile(TaskTile *tile) {
 void HaTaskList::on_message(JsonObjectConst data) {
   if (data["re"].is<uint32_t>()) {
     uint32_t req_id = data["re"].as<uint32_t>();
+    ESP_LOGW(TAG, "on_message ontvangen voor req_id: %u", req_id);
     for (auto *tile : active_tiles_) {
       if (tile->current_req_id() == req_id) {
         tile->handle_response(req_id, data);
@@ -57,6 +58,8 @@ void TaskTile::create(const tessera::TileContext &c) {
   entity_ = c.entity;
   name_ = c.name;
 
+  ESP_LOGW(TAG, "TaskTile::create - entity: '%s', name: '%s'", entity_.c_str(), name_.c_str());
+
   row_h_ = height_ / MAX_ROWS;
 
   for (int i = 0; i < MAX_ROWS; ++i) {
@@ -74,12 +77,16 @@ void TaskTile::create(const tessera::TileContext &c) {
   }
 
   if (entity_.empty()) {
+    ESP_LOGW(TAG, "TaskTile::create - entity is leeg!");
     tessera::ui::set_text(rows_[0].label, "Geen entiteit gekoppeld");
   }
 }
 
 void TaskTile::ask_items() {
-  if (entity_.empty() || !plugin_) return;
+  if (entity_.empty() || !plugin_) {
+    ESP_LOGW(TAG, "ask_items overgeslagen: entity is leeg of plugin pointer is null");
+    return;
+  }
 
   DynamicJsonDocument doc(512);
   doc["ask"] = "call_service:todo.get_items";
@@ -87,9 +94,11 @@ void TaskTile::ask_items() {
   d["entity_id"] = entity_;
 
   asked_req_id_ = tessera::send(plugin_, doc.as<JsonObjectConst>());
+  ESP_LOGW(TAG, "ask_items: verzoek verzonden naar app (req_id: %u, entity: '%s')", asked_req_id_, entity_.c_str());
 }
 
 void TaskTile::on_state(JsonObjectConst data) {
+  ESP_LOGW(TAG, "on_state getriggerd for entity: '%s'", entity_.c_str());
   ask_items();
 }
 
@@ -97,6 +106,8 @@ void TaskTile::handle_response(uint32_t req_id, JsonObjectConst data) {
   if (req_id != asked_req_id_) return;
 
   bool ok = data["ok"] | false;
+  ESP_LOGW(TAG, "handle_response ontvangen (req_id: %u, ok: %s)", req_id, ok ? "true" : "false");
+
   if (!ok) {
     ESP_LOGW(TAG, "Verzoek %u geweigerd of mislukt door app", req_id);
     return;
@@ -131,6 +142,7 @@ void TaskTile::handle_response(uint32_t req_id, JsonObjectConst data) {
     }
   }
 
+  ESP_LOGW(TAG, "handle_response: %d taken geladen in vector", static_cast<int>(tasks_.size()));
   update_rows();
 }
 
@@ -158,6 +170,7 @@ void TaskTile::toggle_item(size_t index) {
   doc["item"] = tasks_[index].uid.empty() ? tasks_[index].text : tasks_[index].uid;
   doc["status"] = tasks_[index].completed ? "completed" : "needs_action";
 
+  ESP_LOGW(TAG, "toggle_item: actie verzonden voor item '%s'", tasks_[index].text.c_str());
   tessera::action("todo.update_item", entity_.c_str(), doc.as<JsonObjectConst>());
 }
 
@@ -166,6 +179,8 @@ void TaskTile::on_tap() {
   if (p.y < 0 || row_h_ <= 0) return;
 
   size_t clicked_row = static_cast<size_t>(p.y / row_h_);
+  ESP_LOGW(TAG, "on_tap getriggerd op y=%d (rij %d)", p.y, static_cast<int>(clicked_row));
+
   if (clicked_row < tasks_.size()) {
     toggle_item(clicked_row);
   } else {
@@ -174,7 +189,6 @@ void TaskTile::on_tap() {
 }
 
 void TaskTile::on_tick(uint32_t epoch) {
-  // Voorkom elke-seconde trigger wanneer de klok nog niet gesynchroniseerd is (epoch == 0)
   if (epoch > 0 && epoch % 60 == 0) {
     ask_items();
   }
