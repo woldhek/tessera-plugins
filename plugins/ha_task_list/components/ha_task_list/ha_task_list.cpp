@@ -5,12 +5,10 @@
 namespace esphome::ha_task_list {
 
 static const char *const TAG = "ha_task_list";
-static HaTaskList *g_plugin_instance = nullptr;
 
 // --- Plugin Implementation ---
 
 void HaTaskList::setup() {
-  g_plugin_instance = this;
   add_tile("tasks", [this]() { return new TaskTile(this); });
 }
 
@@ -41,15 +39,15 @@ void HaTaskList::on_message(JsonObjectConst data) {
 
 // --- Tile Implementation ---
 
-TaskTile::TaskTile(const tessera::Plugin *plugin) : plugin_(plugin) {
-  if (g_plugin_instance) {
-    g_plugin_instance->register_tile(this);
+TaskTile::TaskTile(HaTaskList *plugin) : plugin_(plugin) {
+  if (plugin_) {
+    plugin_->register_tile(this);
   }
 }
 
 TaskTile::~TaskTile() {
-  if (g_plugin_instance) {
-    g_plugin_instance->unregister_tile(this);
+  if (plugin_) {
+    plugin_->unregister_tile(this);
   }
 }
 
@@ -59,10 +57,10 @@ void TaskTile::create(const tessera::TileContext &c) {
   entity_ = c.entity;
   name_ = c.name;
 
-  int row_h = height_ / MAX_ROWS;
+  row_h_ = height_ / MAX_ROWS;
 
   for (int i = 0; i < MAX_ROWS; ++i) {
-    int y_pos = i * row_h + (row_h - 20) / 2;
+    int y_pos = i * row_h_ + (row_h_ - 20) / 2;
 
     rows_[i].checkbox = tessera::ui::label(c.parent, tessera::Font::BODY, theme::MUTED);
     lv_obj_set_pos(rows_[i].checkbox, 6, y_pos);
@@ -75,7 +73,9 @@ void TaskTile::create(const tessera::TileContext &c) {
     tessera::ui::set_text(rows_[i].label, "");
   }
 
-  ask_items();
+  if (entity_.empty()) {
+    tessera::ui::set_text(rows_[0].label, "Geen entiteit gekoppeld");
+  }
 }
 
 void TaskTile::ask_items() {
@@ -96,11 +96,23 @@ void TaskTile::on_state(JsonObjectConst data) {
 void TaskTile::handle_response(uint32_t req_id, JsonObjectConst data) {
   if (req_id != asked_req_id_) return;
 
+  bool ok = data["ok"] | false;
+  if (!ok) {
+    ESP_LOGW(TAG, "Verzoek %u geweigerd of mislukt door app", req_id);
+    return;
+  }
+
   tasks_.clear();
 
-  JsonArrayConst items = data["response"][entity_.c_str()]["items"].as<JsonArrayConst>();
-  if (items.isNull()) {
-    items = data["items"].as<JsonArrayConst>();
+  JsonObjectConst result = data["result"].as<JsonObjectConst>();
+  JsonArrayConst items;
+
+  if (!result.isNull()) {
+    if (result[entity_.c_str()]["items"].is<JsonArrayConst>()) {
+      items = result[entity_.c_str()]["items"].as<JsonArrayConst>();
+    } else if (result["items"].is<JsonArrayConst>()) {
+      items = result["items"].as<JsonArrayConst>();
+    }
   }
 
   if (!items.isNull()) {
@@ -131,31 +143,39 @@ void TaskTile::update_rows() {
       tessera::ui::set_text(rows_[i].label, tasks_[i].text.c_str());
     } else {
       tessera::ui::set_text(rows_[i].checkbox, "");
-      tessera::ui::set_text(rows_[i].label, "");
+      tessera::ui::set_text(rows_[i].label, (i == 0 && tasks_.empty()) ? "Geen taken" : "");
     }
   }
+}
+
+void TaskTile::toggle_item(size_t index) {
+  if (index >= tasks_.size()) return;
+
+  tasks_[index].completed = !tasks_[index].completed;
+  update_rows();
+
+  DynamicJsonDocument doc(256);
+  doc["item"] = tasks_[index].uid.empty() ? tasks_[index].text : tasks_[index].uid;
+  doc["status"] = tasks_[index].completed ? "completed" : "needs_action";
+
+  tessera::action("todo.update_item", entity_.c_str(), doc.as<JsonObjectConst>());
 }
 
 void TaskTile::on_tap() {
-  for (size_t i = 0; i < tasks_.size(); ++i) {
-    if (!tasks_[i].completed) {
-      tasks_[i].completed = true;
-      update_rows();
+  auto p = tessera::tap_point();
+  if (p.y < 0 || row_h_ <= 0) return;
 
-      DynamicJsonDocument doc(256);
-      doc["item"] = tasks_[i].text;
-      doc["status"] = "completed";
-
-      tessera::action("todo.update_item", entity_.c_str(), doc.as<JsonObjectConst>());
-      return;
-    }
+  size_t clicked_row = static_cast<size_t>(p.y / row_h_);
+  if (clicked_row < tasks_.size()) {
+    toggle_item(clicked_row);
+  } else {
+    ask_items();
   }
-
-  ask_items();
 }
 
 void TaskTile::on_tick(uint32_t epoch) {
-  if (epoch % 60 == 0) {
+  // Voorkom elke-seconde trigger wanneer de klok nog niet gesynchroniseerd is (epoch == 0)
+  if (epoch > 0 && epoch % 60 == 0) {
     ask_items();
   }
 }

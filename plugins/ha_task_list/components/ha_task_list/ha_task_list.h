@@ -7,7 +7,7 @@
 
 namespace esphome::ha_task_list {
 
-class TaskTile;
+class HaTaskList;
 
 struct TaskItem {
   std::string uid;
@@ -17,7 +17,7 @@ struct TaskItem {
 
 class TaskTile : public tessera::Tile {
  public:
-  explicit TaskTile(const tessera::Plugin *plugin);
+  explicit TaskTile(HaTaskList *plugin);
   ~TaskTile() override;
 
   void create(const tessera::TileContext &c) override;
@@ -32,10 +32,12 @@ class TaskTile : public tessera::Tile {
 
  private:
   void update_rows();
+  void toggle_item(size_t index);
 
-  const tessera::Plugin *plugin_{nullptr};
+  HaTaskList *plugin_{nullptr};
   int width_{0};
   int height_{0};
+  int row_h_{24};
   std::string entity_;
   std::string name_;
 
