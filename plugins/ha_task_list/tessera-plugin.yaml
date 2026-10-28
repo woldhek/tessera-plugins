@@ -1,0 +1,28 @@
+# The manifest: who made the plugin, what it may do, and what the Tessera app shows. It holds no code and no words:
+# every name, label and hint below is a key into translations/<language>.json, part "app".
+# Every field is explained in docs/MANIFEST.md. Start a plugin of your own with: python3 tools/new_plugin.py <id>
+id: ha_task_list
+version: 0.1.0
+api: "0.15"
+icon: list
+maintainer: woldhek
+license: MIT
+stage: beta
+topics: [home, tech]
+
+tiles:
+  - id: tasks
+    name: task_list
+    icon: list
+    sizes: { min: 1x1, max: 3x4 }
+    memory: 1500
+    options:
+      - { id: entity, kind: entity, label: todo_entity, hint: select_todo_entity, domains: [todo] }
+
+permissions:
+  read_entities: [todo]
+  home_assistant_actions:
+    - todo.update_item
+    - todo.add_item
+    - todo.remove_item
+

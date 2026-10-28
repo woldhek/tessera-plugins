@@ -1,0 +1,16 @@
+{
+  "_meta": { "name": "English" },
+  "screen": {
+    "task_text": "{text}",
+    "no_tasks": "No tasks",
+    "done": "Done",
+    "pending": "Pending"
+  },
+  "app": {
+    "name": "Task List",
+    "summary": "Manage Home Assistant task lists.",
+    "task_list": "Tasks",
+    "todo_entity": "Todo Entity",
+    "select_todo_entity": "Select a todo list entity."
+  }
+}

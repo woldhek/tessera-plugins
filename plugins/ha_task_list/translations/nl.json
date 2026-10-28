@@ -1,0 +1,16 @@
+{
+  "_meta": { "name": "Nederlands" },
+  "screen": {
+    "task_text": "{text}",
+    "no_tasks": "Geen taken",
+    "done": "Voltooid",
+    "pending": "In afwachting"
+  },
+  "app": {
+    "name": "Takenlijst",
+    "summary": "Beheer Home Assistant takenlijsten.",
+    "task_list": "Taken",
+    "todo_entity": "Takenlijst entiteit",
+    "select_todo_entity": "Selecteer een takenlijst entiteit."
+  }
+}
