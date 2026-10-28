@@ -19,24 +19,14 @@ void TaskTile::create(const tessera::TileContext &c) {
   int row_h = height_ / MAX_ROWS;
 
   for (int i = 0; i < MAX_ROWS; ++i) {
-    int y_pos = i * row_h;
+    int y_pos = i * row_h + (row_h - 20) / 2;
 
-    rows_[i].container = lv_obj_create(c.parent);
-    lv_obj_set_pos(rows_[i].container, 0, y_pos);
-    lv_obj_set_size(rows_[i].container, width_, row_h);
-    lv_obj_set_style_bg_opa(rows_[i].container, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_border_width(rows_[i].container, 0, 0);
-    lv_obj_clear_flag(rows_[i].container, LV_OBJ_FLAG_SCROLLABLE);
-
-    lv_obj_set_user_data(rows_[i].container, reinterpret_cast<void *>(uintptr_t(i)));
-    lv_obj_add_event_cb(rows_[i].container, TaskTile::on_row_click, LV_EVENT_CLICKED, this);
-
-    rows_[i].checkbox = tessera::ui::label(rows_[i].container, tessera::Font::BODY, theme::MUTED);
-    lv_obj_set_pos(rows_[i].checkbox, 6, (row_h - 20) / 2);
+    rows_[i].checkbox = tessera::ui::label(c.parent, tessera::Font::BODY, theme::MUTED);
+    lv_obj_set_pos(rows_[i].checkbox, 6, y_pos);
     tessera::ui::set_text(rows_[i].checkbox, "");
 
-    rows_[i].label = tessera::ui::label(rows_[i].container, tessera::Font::BODY, theme::INK);
-    lv_obj_set_pos(rows_[i].label, 32, (row_h - 20) / 2);
+    rows_[i].label = tessera::ui::label(c.parent, tessera::Font::BODY, theme::INK);
+    lv_obj_set_pos(rows_[i].label, 32, y_pos);
     lv_obj_set_width(rows_[i].label, width_ - 38);
     lv_label_set_long_mode(rows_[i].label, LV_LABEL_LONG_MODE_DOTS);
     tessera::ui::set_text(rows_[i].label, "");
@@ -45,29 +35,24 @@ void TaskTile::create(const tessera::TileContext &c) {
   fetch_todo_items();
 }
 
-void TaskTile::on_row_click(lv_event_t *e) {
-  TaskTile *tile = static_cast<TaskTile *>(lv_event_get_user_data(e));
-  lv_obj_t *target = lv_event_get_target(e);
-  uintptr_t index = reinterpret_cast<uintptr_t>(lv_obj_get_user_data(target));
+void TaskTile::toggle_next_item() {
+  for (size_t i = 0; i < tasks_.size(); ++i) {
+    if (!tasks_[i].completed) {
+      tasks_[i].completed = true;
+      update_rows();
 
-  if (tile) {
-    tile->toggle_item(static_cast<size_t>(index));
+      std::map<std::string, std::string> data;
+      data["entity_id"] = entity_;
+      data["item"] = tasks_[i].text;
+      data["status"] = "completed";
+
+      ESP_LOGI(TAG, "Toggling task '%s' to completed", tasks_[i].text.c_str());
+      call_homeassistant_service("todo.update_item", data);
+      return;
+    }
   }
-}
 
-void TaskTile::toggle_item(size_t index) {
-  if (index >= tasks_.size()) return;
-
-  tasks_[index].completed = !tasks_[index].completed;
-  update_rows();
-
-  std::map<std::string, std::string> data;
-  data["entity_id"] = entity_;
-  data["item"] = tasks_[index].text;
-  data["status"] = tasks_[index].completed ? "completed" : "needs_action";
-
-  ESP_LOGI(TAG, "Toggling task '%s' to %s", tasks_[index].text.c_str(), data["status"].c_str());
-  call_homeassistant_service("todo.update_item", data);
+  fetch_todo_items();
 }
 
 void TaskTile::fetch_todo_items() {
@@ -133,7 +118,7 @@ void TaskTile::update_rows() {
 }
 
 void TaskTile::on_tap() {
-  fetch_todo_items();
+  toggle_next_item();
 }
 
 void TaskTile::on_tick(uint32_t epoch) {}

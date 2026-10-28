@@ -2,7 +2,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/api/custom_api_device.h"
-#include "tessera.h"
+#include "esphome/components/smart_display/plugin_api.h"
 #include <vector>
 #include <string>
 
@@ -25,11 +25,10 @@ class TaskTile : public tessera::Tile, public api::CustomAPIDevice {
   void on_tap() override;
 
   void fetch_todo_items();
-  void toggle_item(size_t index);
+  void toggle_next_item();
 
  private:
   void update_rows();
-  static void on_row_click(lv_event_t *e);
 
   const tessera::Plugin *plugin_{nullptr};
   int width_{0};
@@ -40,7 +39,6 @@ class TaskTile : public tessera::Tile, public api::CustomAPIDevice {
   std::vector<TaskItem> tasks_;
 
   struct Row {
-    lv_obj_t *container{nullptr};
     lv_obj_t *checkbox{nullptr};
     lv_obj_t *label{nullptr};
   };
@@ -49,9 +47,10 @@ class TaskTile : public tessera::Tile, public api::CustomAPIDevice {
   Row rows_[MAX_ROWS];
 };
 
-class HaTaskList : public tessera::Plugin {
+class HaTaskList : public Component, public tessera::Plugin {
  public:
   void setup() override;
+  float get_setup_priority() const override { return setup_priority::DATA; }
 };
 
 }  // namespace esphome::ha_task_list
