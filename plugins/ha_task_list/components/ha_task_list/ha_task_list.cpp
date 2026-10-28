@@ -16,37 +16,64 @@ void TaskTile::create(const tessera::TileContext &c) {
   int row_h = height_ / MAX_ROWS;
 
   for (int i = 0; i < MAX_ROWS; ++i) {
-    int y_pos = i * row_h + 4;
+    int y_pos = i * row_h + (row_h - 20) / 2;
 
+    // Checkbox label
     rows_[i].checkbox = tessera::ui::label(c.parent, tessera::Font::BODY, theme::MUTED);
-    lv_obj_set_pos(rows_[i].checkbox, 8, y_pos);
+    lv_obj_set_pos(rows_[i].checkbox, 6, y_pos);
+    lv_label_set_long_mode(rows_[i].checkbox, LV_LABEL_LONG_MODE_CLIP);
     tessera::ui::set_text(rows_[i].checkbox, "[ ]");
 
+    // Taakomschrijving label
     rows_[i].label = tessera::ui::label(c.parent, tessera::Font::BODY, theme::INK);
-    lv_obj_set_pos(rows_[i].label, 40, y_pos);
-    lv_obj_set_width(rows_[i].label, width_ - 48);
+    lv_obj_set_pos(rows_[i].label, 32, y_pos);
+    lv_obj_set_width(rows_[i].label, width_ - 38);
+    lv_label_set_long_mode(rows_[i].label, LV_LABEL_LONG_MODE_DOTS);
     tessera::ui::set_text(rows_[i].label, "");
   }
+
+  update_rows();
 }
 
 void TaskTile::on_state(JsonObjectConst data) {
   tasks_.clear();
+
+  // Haal de taken-array op (zowel direct als uit attributes)
   JsonArrayConst items = data["items"].as<JsonArrayConst>();
+  if (items.isNull() && data["attributes"].is<JsonObjectConst>()) {
+    items = data["attributes"]["items"].as<JsonArrayConst>();
+  }
+
   if (!items.isNull()) {
-    for (const auto &item : items) {
+    for (JsonObjectConst item : items) {
       if (static_cast<int>(tasks_.size()) >= MAX_ROWS) break;
+
       TaskItem t;
-      t.text = item["summary"] | item["text"] | "";
+
+      // Haal taaktekst veilig op zonder bitwise OR-fout
+      if (item["summary"].is<const char *>()) {
+        t.text = item["summary"].as<const char *>();
+      } else if (item["text"].is<const char *>()) {
+        t.text = item["text"].as<const char *>();
+      } else {
+        t.text = "";
+      }
+
+      // Bepaal de status
       const char *status = item["status"] | "";
       t.completed = (strcmp(status, "completed") == 0) || (item["completed"] | false);
+
       tasks_.push_back(t);
     }
   }
+
   update_rows();
 }
 
 void TaskTile::update_rows() {
   for (int i = 0; i < MAX_ROWS; ++i) {
+    if (!rows_[i].checkbox || !rows_[i].label) continue;
+
     if (i < static_cast<int>(tasks_.size())) {
       tessera::ui::set_text(rows_[i].checkbox, tasks_[i].completed ? "[x]" : "[ ]");
       tessera::ui::set_text(rows_[i].label, tasks_[i].text.c_str());
