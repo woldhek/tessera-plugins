@@ -27,14 +27,16 @@ static constexpr int MAX_TASKS = 64;
 class TaskRows {
  public:
   static constexpr int MAX_SLOTS = 16;  // the card's most; a tile makes at most TILE_SLOTS
-  static constexpr int TILE_SLOTS = 12;
+  // A tile's most rows: what the manifest's memory counts (three labels a row). A taller tile spreads them out.
+  static constexpr int TILE_SLOTS = 8;
 
   // Make `slots` rows (at most MAX_SLOTS) in `parent`, `width` wide, in `title` font; `subs`: a task's second line.
   void make(HaTaskList *plugin, lv_obj_t *parent, int width, int slots, tessera::Font title, bool subs);
   // How many tasks from `first` on fit in `height` pixels, without drawing them.
   int fit(const Tasks &tasks, int first, int height) const;
   // Lay out the tasks from `first` on in `height` pixels from the top; returns how many it shows. Hides the rest.
-  int show(const Tasks &tasks, int first, int height);
+  // `more`: there are tasks after these that `tasks` does not hold (the tile keeps only what it shows).
+  int show(const Tasks &tasks, int first, int height, bool more = false);
   // The index in `tasks` of the row under `y`, -1 for none.
   int task_at(int y) const;
   // Paint every row again (the screen went light or dark).
@@ -46,7 +48,9 @@ class TaskRows {
 
  private:
   struct Slot {
-    lv_obj_t *box{}, *check{}, *title{}, *sub{}, *line{};
+    // The round box is one label (its ring or its fill, and the check as its text); the line under a row is the
+    // bottom border of the row's lowest label, so a row is three objects.
+    lv_obj_t *box{}, *title{}, *sub{};
     int y{0}, h{0}, task{-1};
     int8_t done{-1};               // what the box shows now: -1 unknown, 0 open, 1 done
   };
@@ -82,7 +86,8 @@ class TaskTile : public tessera::Tile {
 
   HaTaskList *plugin_{nullptr};
   TaskRows rows_;
-  Tasks tasks_;
+  Tasks tasks_;          // only the first TILE_SLOTS: what the tile can show
+  int total_{0};         // how many the list has (of those the tile shows: open, or open and done)
   tessera::Text entity_, name_, list_name_;
   lv_obj_t *note_{nullptr}, *more_{nullptr};
   int width_{0}, height_{0}, tile_{-1};

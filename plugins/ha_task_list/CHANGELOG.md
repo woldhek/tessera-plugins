@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+- The tile takes half the memory it did (2.9 KB instead of 6 KB of the screen's room for tiles): fewer parts per row,
+  at most eight rows, spread out over a tall tile.
+- The tile keeps only the tasks it shows, which matters on a screen without PSRAM (the CYD).
 ## 0.2.0
 - A new look: every task is a row with a round checkbox, and done tasks are greyed out.
 - When a task has a due date or a description, it shows under the task: "Today", "Tomorrow", "Overdue" in red.

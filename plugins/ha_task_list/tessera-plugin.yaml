@@ -2,7 +2,7 @@
 # every name, label and hint below is a key into translations/<language>.json, part "app".
 # Every field is explained in docs/MANIFEST.md.
 id: ha_task_list
-version: 0.2.0
+version: 0.2.1
 # 0.12: tap_point() on the tile and the card, a card's on_tap, tessera::action with a JSON object.
 api: "0.12"
 icon: format-list-bulleted
@@ -16,9 +16,9 @@ tiles:
     name: task_list
     icon: format-list-bulleted
     sizes: { min: 1x1, max: 3x4 }
-    # Twelve rows at most (a round box with its check, the name, a second line, a line between: about 460 bytes each),
-    # a note and "3 more".
-    memory: 6000
+    # Eight rows at most, three labels each (the round box with its check, the name, a second line whose bottom
+    # border is the line between rows: about 330 bytes a row), a note and "3 more".
+    memory: 2900
     domains: [todo]
     example: tile_example
     options:
