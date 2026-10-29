@@ -1,6 +1,6 @@
 {
  "format": 1,
- "generated": "2026-10-29T09:18:24Z",
+ "generated": "2026-10-29T16:29:33Z",
  "plugin_api": "0.24",
  "blocked": [],
  "featured": [
@@ -42,6 +42,11 @@
    "repo": "https://github.com/maxgramser/tessera-plugins",
    "repo_id": 1408945265,
    "path": "plugins/guition_relays"
+  },
+  "ha_task_list": {
+   "repo": "https://github.com/maxgramser/tessera-plugins",
+   "repo_id": 1408945265,
+   "path": "plugins/ha_task_list"
   },
   "microplant": {
    "repo": "https://github.com/alexscemo/tessera-microplant",
@@ -129,8 +134,8 @@
    "status": "ok",
    "release": {
     "version": "0.2.0",
-    "sha": "8246628c398a8bacb8925ddc64ed8d81c441b694",
-    "date": "2026-10-28"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "bt_proxy",
@@ -234,8 +239,8 @@
    "status": "ok",
    "release": {
     "version": "0.2.0",
-    "sha": "ae25258d1a8d96ae9d6a521ee313179532a7ea08",
-    "date": "2026-10-20"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "cinema",
@@ -925,8 +930,8 @@
    "status": "ok",
    "release": {
     "version": "0.1.0",
-    "sha": "b41c300c7e438fea719d1ab9d8c7a2d52b21b49d",
-    "date": "2026-10-17"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "flip_clock",
@@ -1011,8 +1016,8 @@
    "status": "ok",
    "release": {
     "version": "0.1.0",
-    "sha": "d6a93b79c993c7eb908f1d48da41d17147eb31b7",
-    "date": "2026-10-12"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "guition_relays",
@@ -1090,6 +1095,131 @@
    "image": "store.png"
   },
   {
+   "id": "ha_task_list",
+   "repo": "https://github.com/maxgramser/tessera-plugins",
+   "repo_id": 1408945265,
+   "path": "plugins/ha_task_list",
+   "label": "tessera",
+   "status": "ok",
+   "release": {
+    "version": "0.2.0",
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
+   },
+   "manifest": {
+    "id": "ha_task_list",
+    "version": "0.2.0",
+    "api": "0.12",
+    "icon": "format-list-bulleted",
+    "maintainer": "woldhek",
+    "license": "MIT",
+    "stage": "beta",
+    "topics": [
+     "home",
+     "tech"
+    ],
+    "tiles": [
+     {
+      "id": "tasks",
+      "name": "task_list",
+      "icon": "format-list-bulleted",
+      "sizes": {
+       "min": "1x1",
+       "max": "3x4"
+      },
+      "memory": 6000,
+      "domains": [
+       "todo"
+      ],
+      "example": "tile_example",
+      "options": [
+       {
+        "id": "show_completed",
+        "kind": "toggle",
+        "label": "show_completed",
+        "hint": "show_completed_hint",
+        "default": false
+       }
+      ]
+     }
+    ],
+    "cards": [
+     {
+      "id": "list",
+      "name": "card_name"
+     }
+    ],
+    "permissions": {
+     "read_entities": [
+      "todo"
+     ],
+     "home_assistant_actions": [
+      "todo.update_item"
+     ],
+     "ha_commands": [
+      "call_service:todo.get_items"
+     ]
+    }
+   },
+   "translations": {
+    "en": {
+     "_meta": {
+      "name": "English"
+     },
+     "screen": {
+      "no_tasks": "Nothing on this list",
+      "choose_list": "Choose a to-do list for this tile",
+      "loading": "Loading…",
+      "failed": "Could not load the list",
+      "more": "{n} more",
+      "today": "Today",
+      "overdue": "Overdue",
+      "page": "{page} / {pages}"
+     },
+     "app": {
+      "name": "Task List",
+      "summary": "Your Home Assistant to-do lists on the screen: tick off tasks and page through the whole list.",
+      "task_list": "Tasks",
+      "tile_example": "Groceries, call the plumber",
+      "show_completed": "Show completed tasks",
+      "show_completed_hint": "Done tasks stay on the tile, at the bottom, until you clear them in Home Assistant.",
+      "card_name": "Whole list"
+     }
+    },
+    "nl": {
+     "_meta": {
+      "name": "Nederlands"
+     },
+     "screen": {
+      "no_tasks": "Niets op deze lijst",
+      "choose_list": "Kies een takenlijst voor deze tegel",
+      "loading": "Laden…",
+      "failed": "Kan de lijst niet laden",
+      "more": "nog {n}",
+      "today": "Vandaag",
+      "overdue": "Te laat",
+      "page": "{page} / {pages}"
+     },
+     "app": {
+      "name": "Takenlijst",
+      "summary": "Je Home Assistant-takenlijsten op het scherm: vink taken af en blader door de hele lijst.",
+      "task_list": "Taken",
+      "tile_example": "Boodschappen, loodgieter bellen",
+      "show_completed": "Afgeronde taken tonen",
+      "show_completed_hint": "Afgeronde taken blijven onderaan op de tegel staan tot je ze in Home Assistant opruimt.",
+      "card_name": "Hele lijst"
+     }
+    }
+   },
+   "readme": {
+    "en": "# Task List\n\nYour Home Assistant to-do lists (`todo` entities) on a Tessera screen: Local To-do, Shopping List, Google Tasks,\nTodoist, CalDAV and any other integration that makes a to-do list.\n\n- Every task is a row with a round checkbox: tap it to tick the task off, tap again to untick it.\n- A task with a due date or a description shows it on a second line. \"Overdue\" is red, \"Today\" amber. Not every\n  integration keeps due dates (the Shopping List does not).\n- The tile shows as many tasks as fit, then \"3 more\". Tap there, or anywhere below the tasks, to open the whole list on\n  a card, and page through it with the arrows at the bottom.\n- Done tasks stay out of sight unless you turn on **Show completed tasks**; on the card they always show, at the bottom.\n\nA list shows up to about 25 to 30 tasks: what fits in one answer from Home Assistant to the screen.\n\n## Set up\n\n1. Add the plugin to a screen in the Tessera app.\n2. In Layout, place the **Tasks** tile from the plugin library.\n3. In the inspector, choose your to-do list as the tile's entity.\n4. Optionally, turn on **Show completed tasks**.\n5. Build and install the screen.\n"
+   },
+   "changelog": {
+    "en": "# Changelog\n\n## 0.2.0\n- A new look: every task is a row with a round checkbox, and done tasks are greyed out.\n- When a task has a due date or a description, it shows under the task: \"Today\", \"Tomorrow\", \"Overdue\" in red.\n- The tile shows as many tasks as fit and \"3 more\" when the list is longer; tap there to open the whole list on a\n  card and page through it with the arrows at the bottom.\n- New tile option: Show completed tasks (off by default).\n- Tap a task on the tile or the card to tick it off or untick it.\n## 0.1.1\n- Make it work?\n## 0.1.0\n- First version: a tile that counts the days until a date you choose.\n"
+   },
+   "image": "store.png"
+  },
+  {
    "id": "new_music",
    "repo": "https://github.com/maxgramser/tessera-plugins",
    "repo_id": 1408945265,
@@ -1098,8 +1228,8 @@
    "status": "ok",
    "release": {
     "version": "0.2.0",
-    "sha": "ae25258d1a8d96ae9d6a521ee313179532a7ea08",
-    "date": "2026-10-20"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "new_music",
@@ -1342,8 +1472,8 @@
    "status": "ok",
    "release": {
     "version": "1.2.4",
-    "sha": "d6a93b79c993c7eb908f1d48da41d17147eb31b7",
-    "date": "2026-10-12"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "ov_departures",
@@ -1553,8 +1683,8 @@
    "status": "ok",
    "release": {
     "version": "0.1.0",
-    "sha": "9e1498bb64513cd4928dcfa69c2096ae46576e0c",
-    "date": "2026-10-17"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "photo_clock",
@@ -1667,8 +1797,8 @@
    "status": "ok",
    "release": {
     "version": "0.2.0",
-    "sha": "3b4aeeec25033f64c4f1a2b44b21e1d6098e4cb3",
-    "date": "2026-10-20"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "picture_frame",
@@ -1802,7 +1932,7 @@
    "status": "ok",
    "release": {
     "version": "0.6.13",
-    "sha": "74f19d1dbb7fa90170bb37ec2cf9a4ac18cdc31e",
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
     "date": "2026-10-29"
    },
    "manifest": {
@@ -1938,8 +2068,8 @@
    "status": "ok",
    "release": {
     "version": "0.2.1",
-    "sha": "ec8a7b2c0a92cd1b58d3c38c1b5f27f3d34ad680",
-    "date": "2026-10-16"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "tap_sound",
@@ -2020,7 +2150,7 @@
    "status": "ok",
    "release": {
     "version": "0.1.0",
-    "sha": "5af8e0524835d44394ecd4374c1d0847ddf72a2f",
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
     "date": "2026-10-29"
    },
    "manifest": {
@@ -2116,8 +2246,8 @@
    "status": "ok",
    "release": {
     "version": "0.4.0",
-    "sha": "3f01a3d528a0b31b2171dc2db612520067d30c81",
-    "date": "2026-10-25"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "voice_assist",
@@ -2289,8 +2419,8 @@
    "status": "ok",
    "release": {
     "version": "1.0.7",
-    "sha": "d6a93b79c993c7eb908f1d48da41d17147eb31b7",
-    "date": "2026-10-12"
+    "sha": "ed42e960890069bb0b5c33f7af6e79d443c5da4d",
+    "date": "2026-10-29"
    },
    "manifest": {
     "id": "waste_collection",
