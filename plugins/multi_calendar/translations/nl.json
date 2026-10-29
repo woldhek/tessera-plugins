@@ -1,0 +1,23 @@
+{
+  "_meta": { "name": "Nederlands" },
+  "screen": {
+    "today": "Vandaag",
+    "all_day": "Hele dag",
+    "ongoing": "Nu",
+    "nothing": "Niets gepland",
+    "loading": "Laden…",
+    "failed": "De agenda antwoordt niet",
+    "choose_calendar": "Kies een agenda voor deze tegel",
+    "more": "nog {n}"
+  },
+  "app": {
+    "name": "Meerdere agenda's",
+    "summary": "De komende afspraken van één dag, uit meerdere Home Assistant-agenda's in één tegel.",
+    "tile_name": "Agenda",
+    "tile_example": "Tandarts 09:00, Teamoverleg 14:30",
+    "more_calendars": "Meer agenda's",
+    "more_calendars_hint": "Tot drie extra agenda's om te combineren met de agenda hierboven, als entiteit-id zoals calendar.werk.",
+    "days_ahead": "Dagen vooruitkijken",
+    "days_ahead_hint": "Is er vandaag niets meer, dan toont de tegel de eerstvolgende dag met afspraken binnen dit aantal dagen."
+  }
+}

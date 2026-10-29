@@ -1,0 +1,38 @@
+# What tools/preview.py shows (docs/PREVIEW.md): the agenda tile with three calendars, and the answer of
+# calendar.get_events it asks for. The bench gives the same answer to every question, so one answer holds every
+# calendar, keyed by its entity. Moments are made from the time of the render ("{now+1h}").
+tiles:
+  - tile: agenda
+    name: Agenda
+    entity: calendar.family
+    options: { more_calendars: [calendar.work, calendar.birthdays], days_ahead: 3 }
+  - tile: agenda
+    name: Family only
+    entity: calendar.family
+    sizes: [2x2, 3x2]
+
+states:
+  calendar.family:
+    state: "off"
+    attributes: { friendly_name: Family }
+  calendar.work:
+    state: "off"
+    attributes: { friendly_name: Work }
+  calendar.birthdays:
+    state: "off"
+    attributes: { friendly_name: Birthdays }
+
+commands:
+  "call_service:calendar.get_events":
+    calendar.family:
+      events:
+        - { start: "{now+1h}", end: "{now+2h}", summary: Dentist }
+        - { start: "{now+6h}", end: "{now+7h}", summary: Pick up the kids }
+    calendar.work:
+      events:
+        - { start: "{now+2h}", end: "{now+3h}", summary: Team meeting }
+        - { start: "{now+4h}", end: "{now+5h}", summary: Lunch with Sam }
+        - { start: "{now+5h}", end: "{now+6h}", summary: Review the quarterly numbers with finance }
+    calendar.birthdays:
+      events:
+        - { start: "{now+3h}", end: "{now+4h}", summary: Anna's birthday }

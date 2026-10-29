@@ -1,0 +1,23 @@
+{
+  "_meta": { "name": "English" },
+  "screen": {
+    "today": "Today",
+    "all_day": "All day",
+    "ongoing": "Now",
+    "nothing": "Nothing planned",
+    "loading": "Loading…",
+    "failed": "The calendar did not answer",
+    "choose_calendar": "Choose a calendar for this tile",
+    "more": "{n} more"
+  },
+  "app": {
+    "name": "Multi calendar",
+    "summary": "The coming appointments of one day, from several Home Assistant calendars in one tile.",
+    "tile_name": "Agenda",
+    "tile_example": "Dentist 09:00, Team meeting 14:30",
+    "more_calendars": "More calendars",
+    "more_calendars_hint": "Up to three more calendars to combine with the one chosen above, as entity ids such as calendar.work.",
+    "days_ahead": "Days to look ahead",
+    "days_ahead_hint": "When nothing is left today, the tile shows the next day with appointments within this many days."
+  }
+}

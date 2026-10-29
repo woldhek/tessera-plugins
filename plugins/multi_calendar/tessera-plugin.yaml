@@ -1,0 +1,32 @@
+# The manifest: who made the plugin, what it may do, and what the Tessera app shows. It holds no code and no words:
+# every name, label and hint below is a key into translations/<language>.json, part "app".
+# Every field is explained in docs/MANIFEST.md.
+id: multi_calendar
+version: 0.1.0
+# 0.12: an option with `multiple` (the extra calendars of a tile).
+api: "0.12"
+icon: calendar
+maintainer: woldhek
+license: MIT
+stage: beta
+topics: [calendar]
+
+tiles:
+  - id: agenda
+    name: tile_name
+    icon: calendar
+    sizes: { min: 2x2, max: 3x4 }
+    # Eight rows at most, three parts each (the calendar's dot, the time, the title: about 330 bytes a row), the day's
+    # name with its date, a note and "3 more".
+    memory: 3400
+    # The first calendar is the tile's own entity, chosen in the inspector; `more_calendars` adds up to three more.
+    domains: [calendar]
+    example: tile_example
+    options:
+      - { id: more_calendars, kind: text, multiple: 3, label: more_calendars, hint: more_calendars_hint }
+      - { id: days_ahead, kind: number, min: 1, max: 7, step: 1, default: 3, label: days_ahead, hint: days_ahead_hint }
+
+permissions:
+  read_entities: [calendar]
+  ha_commands:
+    - "call_service:calendar.get_events"
