@@ -5,7 +5,7 @@ This project implements a native **Tessera Plugin** (`ha_task_list`) to display,
 
 - **Plugin ID:** `ha_task_list`
 - **Target Runtime:** ESPHome / C++ (`tessera::Tile`) with Home Assistant backend integrations.
-- **Supported Sizes:** `1x2`, `2x2`, `2x3`, `2x4`, `3x4`, `4x4` touch tiles.
+- **Supported Sizes:** `1x1` up to `3x4`; a card (`list`) shows the whole list a page at a time.
 
 ---
 
@@ -30,8 +30,10 @@ plugins/ha_task_list/
 ## Technical Architecture & APIs
 
 - **Manifest (`tessera-plugin.yaml`):**
-  - Configures tile options (e.g., `entity_id` for selecting `todo.*` entity).
-  - Configures `permissions.ha_commands` for triggering `todo` domain actions (`todo.add_item`, `todo.update_item`, `todo.remove_item`).
+  - The tile belongs to a `todo` entity (`domains: [todo]`); one option, `show_completed`.
+  - `permissions.ha_commands` names `call_service:todo.get_items` (the items, asked through the app with `tessera::send`);
+    `home_assistant_actions` names `todo.update_item` (tick and untick).
+  - The app's answer is at most ~3 KB with texts cut to 48 bytes: about 25 to 30 items reach the screen.
 - **C++ Tile Class (`tessera::Tile`):**
   - `create(const tessera::TileContext &c)`: Instantiates labels, checkboxes, and touch targets.
   - `on_state(JsonObjectConst data)`: Receives entity updates and task item JSON payloads from Home Assistant.

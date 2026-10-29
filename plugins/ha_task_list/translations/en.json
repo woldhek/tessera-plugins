@@ -1,16 +1,22 @@
 {
   "_meta": { "name": "English" },
   "screen": {
-    "task_text": "{text}",
-    "no_tasks": "No tasks",
-    "done": "Done",
-    "pending": "Pending"
+    "no_tasks": "Nothing on this list",
+    "choose_list": "Choose a to-do list for this tile",
+    "loading": "Loading…",
+    "failed": "Could not load the list",
+    "more": "{n} more",
+    "today": "Today",
+    "overdue": "Overdue",
+    "page": "{page} / {pages}"
   },
   "app": {
     "name": "Task List",
-    "summary": "Manage Home Assistant task lists.",
+    "summary": "Your Home Assistant to-do lists on the screen: tick off tasks and page through the whole list.",
     "task_list": "Tasks",
-    "todo_entity": "Todo Entity",
-    "select_todo_entity": "Select a todo list entity."
+    "tile_example": "Groceries, call the plumber",
+    "show_completed": "Show completed tasks",
+    "show_completed_hint": "Done tasks stay on the tile, at the bottom, until you clear them in Home Assistant.",
+    "card_name": "Whole list"
   }
 }

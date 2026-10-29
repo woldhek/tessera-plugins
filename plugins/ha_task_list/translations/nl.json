@@ -1,16 +1,22 @@
 {
   "_meta": { "name": "Nederlands" },
   "screen": {
-    "task_text": "{text}",
-    "no_tasks": "Geen taken",
-    "done": "Voltooid",
-    "pending": "In afwachting"
+    "no_tasks": "Niets op deze lijst",
+    "choose_list": "Kies een takenlijst voor deze tegel",
+    "loading": "Laden…",
+    "failed": "Kan de lijst niet laden",
+    "more": "nog {n}",
+    "today": "Vandaag",
+    "overdue": "Te laat",
+    "page": "{page} / {pages}"
   },
   "app": {
     "name": "Takenlijst",
-    "summary": "Beheer Home Assistant takenlijsten.",
+    "summary": "Je Home Assistant-takenlijsten op het scherm: vink taken af en blader door de hele lijst.",
     "task_list": "Taken",
-    "todo_entity": "Takenlijst entiteit",
-    "select_todo_entity": "Selecteer een takenlijst entiteit."
+    "tile_example": "Boodschappen, loodgieter bellen",
+    "show_completed": "Afgeronde taken tonen",
+    "show_completed_hint": "Afgeronde taken blijven onderaan op de tegel staan tot je ze in Home Assistant opruimt.",
+    "card_name": "Hele lijst"
   }
 }
