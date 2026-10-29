@@ -7,6 +7,7 @@
 #include "esphome/core/component.h"
 #include "esphome/components/camera/camera.h"
 #include "esphome/components/i2c/i2c.h"
+#include "camera_sensor.h"
 
 #include "driver/gpio.h"
 #include "driver/ppa.h"
@@ -176,6 +177,14 @@ class ESPVideoCamera : public camera::Camera {
                                            std::memory_order_release);
   }
 
+  // The field of view (Screen camera's setting "Field of view"; Tessera's docs/PLATFORM_PLAN.md 4.6): 0 the sensor's
+  // own mode (Sharp), 1 Full, the mode the sensor's driver offers over its whole field (camera_sensor.h, field_format;
+  // the OV02C10's only, for now). Any thread: the capture task stops, hands the sensor its format and starts again, and
+  // goes back to the sensor's own mode by itself when the driver has no such mode or no frame comes in it.
+  void set_field(int field);
+  // True once after such a fall back, for the setting to show Sharp again.
+  bool take_field_fallback() { return this->field_fell_back_.exchange(false); }
+
   // camera::Camera -------------------------------------------------------------
   void add_listener(camera::CameraListener *listener) override { this->listeners_.push_back(listener); }
   camera::CameraImageReader *create_image_reader() override;
@@ -190,6 +199,20 @@ class ESPVideoCamera : public camera::Camera {
   bool register_jpeg_frame_consumer(JpegFrameConsumer *consumer);
   bool start_jpeg_frame_consumer(JpegFrameConsumer *consumer);
   void stop_jpeg_frame_consumer(JpegFrameConsumer *consumer);
+  // Tessera: the sensor's exposure time (microseconds) and gain (1 = none) as the ISP pipeline set them last, read
+  // through esp_video's V4L2 controls. Only from a raw frame consumer, which runs on the capture task, the one user
+  // of the capture descriptor. False when the sensor does not report them.
+  bool read_sensor_exposure(float *exposure_us, float *gain);
+  // Tessera: how many frames a second the sensor makes (camera_sensor.h), 0 for its format's own; any thread. The
+  // capture task hands it to the sensor between two frames, and again after every start and change of format. A sensor
+  // whose driver cannot (none added itself), and a camera that thins its frames itself (its JPEG device below the
+  // sensor's rate), keep the format's own rate.
+  void set_frame_rate(int fps) { this->fps_wanted_.store(fps < 0 ? 0 : fps, std::memory_order_release); }
+  // Home Assistant asks the camera for pictures or a stream (its JPEG device), any thread.
+  bool requested() const {
+    return this->stream_requesters_.load(std::memory_order_acquire) != 0 ||
+           this->single_requesters_.load(std::memory_order_acquire) != 0;
+  }
 
  protected:
   bool init_pipeline_();
@@ -247,7 +270,7 @@ class ESPVideoCamera : public camera::Camera {
   bool is_hw_jpeg_{false};
   bool is_raw_csi_{false};
   std::string resolution_{"auto"};
-  int jpeg_quality_{10};
+  int jpeg_quality_{80};
   uint16_t rotation_degrees_{0};
   std::atomic<float> max_framerate_{10.0f};
   std::atomic<uint32_t> min_interval_ms_{100};
@@ -264,6 +287,17 @@ class ESPVideoCamera : public camera::Camera {
   // being incidentally atomic on the P4.
   std::atomic<uint8_t> stream_requesters_{0};
   std::atomic<uint8_t> single_requesters_{0};
+  // The sensor's frame rate (set_frame_rate): wanted, and on the capture task the one in force (-1 before the sensor
+  // was told since its last start), whether the log said the sensor keeps its own, and whether the capture thins its
+  // frames itself (S_PARM below the sensor's rate), which a slower sensor would thin once more.
+  std::atomic<int> fps_wanted_{0};
+  int fps_active_{-1};
+  bool fps_told_{false};
+  bool csi_divides_{false};
+  // The sensor whose frame length changed last, and when to read back what took (0: nothing to read).
+  const tessera_camera_sensor_t *fps_sensor_{nullptr};
+  uint32_t fps_report_at_ms_{0};
+  void apply_frame_rate_();
   std::atomic<RawVideoFrameConsumer *> raw_frame_consumer_{nullptr};
   std::atomic<RawVideoPixelFormat> raw_frame_pixel_format_{
       RawVideoPixelFormat::RGB565_LE};
@@ -381,8 +415,23 @@ class ESPVideoCamera : public camera::Camera {
   std::atomic<int> rt_exposure_{-1};  // V4L2_CID_EXPOSURE, 2-235 on OV5647
   std::atomic<int> rt_vflip_{-1};    // V4L2_CID_VFLIP 0/1
   std::atomic<int> rt_hflip_{-1};    // V4L2_CID_HFLIP 0/1
-  std::atomic<int> rt_quality_{-1};  // V4L2_CID_JPEG_COMPRESSION_QUALITY 1-63
+  std::atomic<int> rt_quality_{-1};  // V4L2_CID_JPEG_COMPRESSION_QUALITY 1-100, higher is better
   std::atomic<bool> ctrls_dirty_{false};
+
+  // The field of view (set_field): wanted (any thread), and on the capture task the mode in force, since when and how
+  // many frames came in it, and whether its first ten seconds were logged.
+  std::atomic<int> field_wanted_{0};
+  std::atomic<bool> field_fell_back_{false};
+  int field_active_{0};
+  uint32_t field_since_ms_{0};
+  uint32_t field_frames_{0};
+  bool field_told_{true};
+  // Only the raw capture (the part Video) takes another mode; the camera's JPEG device keeps its own.
+  bool field_pending_() const {
+    return this->is_raw_csi_ && this->field_wanted_.load(std::memory_order_acquire) != this->field_active_;
+  }
+  void apply_field_();
+  void field_failed_(const char *why);
 };
 
 }  // namespace esphome::esp_video_camera

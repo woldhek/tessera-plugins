@@ -1,0 +1,25 @@
+# The part "Video": the screen's camera as live video with sound in Home Assistant (README.md, "Video"). Home Assistant
+# shows it through the tessera_video integration, which Tessera installs (Settings, Video in Home Assistant): a camera
+# "Video" on the screen's device, live in the browser and the app through go2rtc, stills included.
+
+# The camera in its raw mode, at up to 30 frames a second, the video taking 15 of them: from boot on, because the
+# hardware encoder is made at the first frame. Its pictures as JPEG go: the camera "Camera" leaves Home Assistant, and
+# "Video" gives the stills.
+esp_video_camera:
+  id: ts_camera
+  device: csi
+  max_framerate: 30
+  internal: true
+
+# No empty encoder for this build (components/esp_h264_placeholder).
+esp_h264_placeholder: !remove
+
+# lwIP's TCP send buffer is the core's: Tessera sets it to 65534 bytes on every ESP32-P4 (packages/hardware/esp32p4-c6.yaml).
+# Its default of 5760 bytes held the sound up behind the picture for seconds over the C6's Wi-Fi.
+
+screen_video:
+  camera: ts_camera
+  screen_camera: screen_camera_plugin
+  microphone:
+    microphone: ts_microphone
+    gain_factor: 4

@@ -30,11 +30,24 @@ Hold the top bar, then **Settings**, **Plugins**, **Voice assistant**:
 - **Wake phrase**: Okay Nabu, Hey Jarvis or Hey Mycroft.
 - **Wake sound**: a short sound when the screen starts to listen, after the wake phrase or a tap.
 - **Thinking sound**: a soft sound, again and again, while Home Assistant works out the answer.
+- **Show popup**: a popup over the screen while it listens, thinks and answers (on unless you turn it off). See below.
 - **Ask now**: asks a question at once.
 
 The settings are entities of the screen in Home Assistant too ("Wake word", "Wake phrase", "Wake sound", "Thinking
-sound"), and the editor shows them in the plugin's details on the screen's Plugins tab. The screen's own **Microphone** switch, on a board that has one,
+sound", "Show popup"), and the editor shows them in the plugin's details on the screen's Plugins tab. The screen's own **Microphone** switch, on a board that has one,
 silences it for the assistant as well.
+
+## The popup
+
+As soon as the screen hears its wake phrase, or you tap the tile, a popup comes over the screen, also when the screen
+was dark or asleep. Rings ripple out of the microphone while it listens, an arc turns while Home Assistant thinks, and
+under them comes what it heard and then the answer, word by word as the speaker says it; a long answer shows its last
+lines. The popup stays 30 seconds after the answer so you can read it again. Its close key, a tap on it or a tap beside
+it closes it sooner; while a question goes on, a tap on the popup stops it. It needs Tessera with plugin API 0.18.
+
+The words of the answer come all at once from Home Assistant, at the end of its answer: Home Assistant does not send
+an answer in pieces to an ESPHome screen while it is being written. The popup shows them at the pace of speech, in
+step with the speaker.
 
 ## The sounds
 

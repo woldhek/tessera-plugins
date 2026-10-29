@@ -13,11 +13,12 @@
 | Waking the screen when someone stands in front of it | A plugin with a radar sensor and `on_interval`. |
 | Settings a person changes in the editor, a test with its result ("Heard: Okay Nabu") | ESPHome entities in `plugin.yaml` named in `settings`; a button with a `status`. |
 | Talking to an AI model or a voice assistant | Home Assistant's Assist and its conversation agents (OpenAI, Anthropic); the plugin picks the assistant, the key stays in Home Assistant. |
+| Something over the whole screen for a moment: what the voice assistant heard and answers, a timer that went off, a question | A popup (plugin API 0.18): the alert's card with your parts in it, as high as they are, a close key in its corner, `ui::animate` for a part that moves while something goes on (the `voice_assist` plugin). It lights a dark screen. |
 | Several stops, artists, calendars or tickers on one tile, picked in the editor or found by typing | An option with `multiple` (and `search`), and a fetch with `each` that asks once per value and shows one list, or `{name\|,}` for a service that takes them all in one ask (plugin API 0.12, [FETCH.md](FETCH.md)). |
 | A card with a list whose rows switch their entity (the lights that are on, the open locks) | A card's `on_tap` and `tessera::tap_point()` to find the row, then `tessera::action` (0.12, [FIRMWARE_API.md](FIRMWARE_API.md), "A card"). |
 | Playing an album, a playlist or a radio station on a tap | `tessera::action` with several fields of any type: `media_id`, `media_type`, `artist`, a list of speakers (0.12, [FIRMWARE_API.md](FIRMWARE_API.md), "Actions"). |
 | A clock of your own design in standby, on every screen (the CYD too) | A face of the screensaver's clock: a saver of `step: clock` (plugin API 0.14, the `flip_clock` plugin). It gets the temperature and the row of entities the person chose for the clock. |
-| Another look for the music or the photos in standby, with the cover or the photo | A face of `step: media` or `photos` with `pictures` and the address `saver:picture` (the `vinyl_deck` and `photo_clock` plugins), on screens with pictures. |
+| Another look for the music or the photos in standby, with the cover or the photo | A face of `step: media` or `photos` with `pictures` and the address `step:` (the `vinyl_deck` and `photo_clock` plugins), on screens with pictures. |
 | Play, pause, mute and the volume from the screensaver without waking the screen | Parts made with `ui::takes_taps` (`taps: true`); play, pause and mute with `tessera::wish`, the volume with `tessera::action` (the `vinyl_deck` plugin). |
 | A screensaver step of your own: the rain radar while it rains, a quote of the day, the bins on the evening before | A saver of `step: own` with a `fetch` (`data`) or an entity (`domains`), and `when` to say when it has something to show; the app goes on to the next step while it has nothing. |
 | Tonight's films with their posters, a person's photo, a logo on a tile | Places for pictures on the tile (`ui::picture`, the manifest's `pictures`, plugin API 0.10): the app fetches each picture from a host the manifest names, or Home Assistant's own, and the screen shows them ([FIRMWARE_API.md](FIRMWARE_API.md), "Pictures on a tile"). |
@@ -55,9 +56,10 @@ entities of Home Assistant (a tile has one entity through `domains`), an option 
 your own, a pause between the asks of a fetch with `each` (a service that allows one ask a second), and a Python part of
 a plugin in the app (the app runs only its own code, see above). For a screensaver: a face of the camera step, an
 animation of its own faster than `on_tick`'s second, video, and more
-than four savers per plugin. A settings page on the screen, a card, top bar items, tap actions, tiles of an entity,
+than four savers per plugin. For a popup: pictures, scrolling, and an Assist answer before Home Assistant has it whole.
+A settings page on the screen, a card, top bar items, tap actions, tiles of an entity,
 pictures on a tile, a card and a screensaver, screensavers (faces of the clock, the music and the photos, and steps of
-their own), questions to the app, sounds on the screen's speaker and a camera of the screen's own for Home Assistant
+their own), popups, questions to the app, sounds on the screen's speaker and a camera of the screen's own for Home Assistant
 (the features `camera` and `camera_sensor`) are all there ([FIRMWARE_API.md](FIRMWARE_API.md)).
 
 ## plugin.yaml

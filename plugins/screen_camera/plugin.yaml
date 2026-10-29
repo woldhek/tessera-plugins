@@ -1,5 +1,5 @@
 # What a screen gets when it takes this plugin: its camera sensor as ESPHome's camera, which Home Assistant shows as a
-# camera of the screen's device, and the camera in the top bar while Home Assistant takes pictures. The sensor is the
+# camera of the screen's device; Tessera's core shows its dot on the glass while the camera is in use. The sensor is the
 # board's (the feature camera_sensor): the board file powers it, names its I2C bus in CAMERA_I2C and the pin that clocks
 # it in CAMERA_XCLK_PIN (-1 for a sensor with its own clock), so nothing here owns a pin.
 
@@ -14,8 +14,102 @@ esp_video_camera:
   xclk_pin: ${CAMERA_XCLK_PIN}
   device: jpeg
   resolution: auto
-  jpeg_quality: 12
+  jpeg_quality: 80                 # 1 to 100, higher is better: a picture of about 150 to 300 KB
   max_framerate: 5
 
+# The camera above makes JPEG pictures only, so the build takes an empty esp_h264 instead of the encoder. The part
+# "Video" (parts/video.yaml) removes this and gets the real one.
+esp_h264_placeholder:
+
+# The OmniVision OV02C10 of the Guition ESP32-P4 screens, which esp_cam_sensor has no driver for (components/ov02c10).
+ov02c10:
+
+# The SmartSens SC202CS (SC2356) of the M5Stack Tab5 and the reTerminal D1001: its black level, which their ESP32-P4's
+# image processor cannot take off (components/sc202cs). It leaves a sensor of another id alone.
+sc202cs:
+  i2c_id: ${CAMERA_I2C}
+
+# The room's light level and motion, worked out on the screen from the camera's frames: no picture leaves the screen for
+# them. Off until a person switches it on, because the camera then keeps running (at the frame rate above); the core's dot
+# shows while it does. Motion can wake the screen, a setting of its own, off as well.
+switch:
+  - platform: template
+    id: screen_camera_sensing
+    name: "Camera light level and motion"
+    icon: mdi:motion-sensor
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    turn_on_action:
+      - lambda: id(screen_camera_plugin).set_sensing(true);
+    turn_off_action:
+      - lambda: id(screen_camera_plugin).set_sensing(false);
+  - platform: template
+    id: screen_camera_wake
+    name: "Camera motion wakes the screen"
+    icon: mdi:motion-sensor
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    turn_on_action:
+      - lambda: id(screen_camera_plugin).set_wake_on_motion(true);
+    turn_off_action:
+      - lambda: id(screen_camera_plugin).set_wake_on_motion(false);
+
+# A screen mounted the other way round from how its board is built: the camera's picture turns half way on top of what
+# the board and the screen's rotation say (tessera::camera_turn), for the pictures, the video and sensing alike.
+  - platform: template
+    id: screen_camera_upside_down
+    name: "Camera upside down"
+    icon: mdi:camera-flip
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    turn_on_action:
+      - lambda: id(screen_camera_plugin).set_upside_down(true);
+    turn_off_action:
+      - lambda: id(screen_camera_plugin).set_upside_down(false);
+
+# How much of the room the camera shows (Tessera's docs/PLATFORM_PLAN.md 4.6): Full, the default, the whole of what the
+# sensor sees at half the resolution; Sharp the sensor's own mode, the middle of its picture. Only a camera whose driver
+# offers a mode over its whole field takes Full (esp_video_camera's camera_sensor.h; the Guition's OV02C10); any other
+# stays at Sharp, and a mode that gives no picture goes back to Sharp by itself. The part Video only; the pictures
+# without it keep Sharp.
+select:
+  - platform: template
+    id: screen_camera_field
+    name: "Camera field of view"
+    icon: mdi:fit-to-screen-outline
+    optimistic: true
+    options: ["Sharp", "Full"]
+    initial_option: "Full"
+    restore_value: true
+    entity_category: config
+    on_value:
+      - lambda: 'id(screen_camera_plugin).set_field(i);'
+
+# How long Motion stays on after the last movement: seconds for "someone walked past", minutes for "the room is empty".
+number:
+  - platform: template
+    id: screen_camera_motion_time_out
+    name: "Camera motion timeout"
+    icon: mdi:timer-outline
+    optimistic: true
+    restore_value: true
+    initial_value: 10
+    min_value: 5
+    max_value: 600
+    step: 5
+    unit_of_measurement: s
+    entity_category: config
+
 screen_camera:
+  id: screen_camera_plugin
   camera: ts_camera
+  field_of_view: screen_camera_field
+  illuminance:
+    name: "Light level"
+  motion:
+    name: "Motion"
+    filters:
+      - delayed_off: !lambda 'return id(screen_camera_motion_time_out).state * 1000;'

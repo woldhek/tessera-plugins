@@ -64,7 +64,11 @@ API_PARTS = [((0, 9), re.compile(r'Font::DIGITS|\bui::covers\s*\(|Tone::GOOD|\bu
              # A screensaver (docs/FIRMWARE_API.md, "A screensaver"): the manifest's `savers` needs 0.14 as well.
              ((0, 14), re.compile(r'\badd_saver\s*\(|\bSaver(?:Context|Step)?\b|\bui::takes_taps\s*\(|\btessera::wish\s*\('
                                   r'|\bWish::|\btessera::drift\s*\('),
-              'a screensaver (add_saver, Saver, SaverContext, SaverStep), ui::takes_taps, tessera::wish and tessera::drift')]
+              'a screensaver (add_saver, Saver, SaverContext, SaverStep), ui::takes_taps, tessera::wish and tessera::drift'),
+             # A popup (docs/FIRMWARE_API.md, "A popup").
+             ((0, 18), re.compile(r'\bshow_popup\s*\(|\bclose_popup\s*\(|\bpopup_shown\s*\(|\bPopup(?:Context|Width)?\b'
+                                  r'|\bui::animate\s*\(|\bui::still\s*\(|\bMotion::'),
+              'a popup (show_popup, close_popup, popup_shown, Popup, PopupContext, PopupWidth), ui::animate and ui::still')]
 
 # What plugin.yaml (and a part's file) never sets at its top level (docs/LIMITS.md, "plugin.yaml"). It is merged into
 # the screen's own configuration, so these would change what the core and the screen's own YAML hold, or open the

@@ -201,11 +201,11 @@ class FilmsTile : public tessera::Tile {
     // How far one film is from the next: the middle of the middle poster to the middle of its first neighbour.
     pitch_ = side >= w / 4 ? w / 2 + gap + side / 2 : w + gap;
     for (Slot f : frames) {
-      f.place = ui::picture(parent);
+      // No block while a poster comes (plugin API 0.17): blocks the height of poster and reflection would read as long
+      // bars, and the core keeps a place without one so, whatever comes of its picture.
+      f.place = ui::picture(parent, tessera::Placeholder::NONE);
       lv_obj_set_size(f.place, f.w, mirrored);
       lv_obj_set_pos(f.place, f.x, 0);
-      // No block while a poster comes: blocks the height of poster and reflection would read as long bars.
-      lv_obj_set_style_bg_opa(f.place, LV_OPA_TRANSP, 0);
       slots_.push_back(f);
     }
     badge_right_ = centre_x_ + w;

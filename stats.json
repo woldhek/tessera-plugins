@@ -14,7 +14,7 @@
    "homes": 0
   },
   "custom_card": {
-   "likes": 6,
+   "likes": 7,
    "rating": null,
    "ratings": 0,
    "homes": 1
@@ -28,7 +28,7 @@
   "flip_clock": {
    "likes": 3,
    "rating": null,
-   "ratings": 0,
+   "ratings": 1,
    "homes": 1
   },
   "microplant": {
@@ -98,7 +98,7 @@
    "homes": 1
   },
   "waze_traveltime": {
-   "likes": 1,
+   "likes": 2,
    "rating": null,
    "ratings": 0,
    "homes": 0

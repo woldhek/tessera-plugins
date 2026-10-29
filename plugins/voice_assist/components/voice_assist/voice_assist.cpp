@@ -16,6 +16,14 @@ static constexpr uint32_t ICON_ANSWERING = 0xF057E;   // volume-high
 static constexpr uint32_t ICON_FAILED = 0xF169F;      // robot-confused
 // How long a reply or a failure stays on the tile after it was spoken.
 static constexpr uint32_t REPLY_SHOWN_MS = 20000;
+// How long the popup stays after the answer was spoken or a failure, to read it again (its close key or a tap closes it
+// sooner), and after a question that came to nothing (nothing heard, "never mind").
+static constexpr uint32_t POPUP_AFTER_MS = 30000, POPUP_EMPTY_MS = 2000;
+// The pace of the words in the popup: about that of Home Assistant's voices (Piper, Home Assistant Cloud), in
+// characters a second. The whole answer shows once the speaker is done.
+static constexpr uint32_t SPOKEN_CHARS_PER_S = 15;
+// How long after the answer went to the speaker its words start anyway, when the media player never says it plays.
+static constexpr uint32_t HEARD_AFTER_MS = 1500;
 static bool is_on(switch_::Switch *s) { return s == nullptr || s->state; }
 
 // The tile: the assistant's icon, what it does now, and under it what it heard or answered. A tap asks, or stops.
@@ -141,6 +149,8 @@ bool VoiceAssist::settings(tessera::SettingsPage &page) {
               [this](bool on) {
                 if (thinking_sound_on_ != nullptr) on ? thinking_sound_on_->turn_on() : thinking_sound_on_->turn_off();
               });
+  page.toggle(text("show_popup"), [this] { return is_on(show_popup_on_); },
+              [this](bool on) { if (show_popup_on_ != nullptr) on ? show_popup_on_->turn_on() : show_popup_on_->turn_off(); });
   page.action(text("ask"), "\U000F06A9", [this] { ask(); }, nullptr,
               [this]() -> std::string { return busy() ? phase_word() : std::string(); })
       .active([this] { return busy(); });
@@ -152,29 +162,113 @@ void VoiceAssist::loop() {
   // the rhythm and nothing is cut off. The player hands the speaker what it takes, never waiting.
   if (phase_ == Phase::THINKING && is_on(thinking_sound_on_) && !sounds_.playing()) sounds_.play(thinking_sound_);
   sounds_.loop();
+  const uint32_t now = millis();
+  // The answer is heard once the media player announces it (it buffers first), or a moment after it went there.
+  if (speak_asked_ && !speak_from_) {
+    const bool playing = media_player_ != nullptr && media_player_->state == media_player::MEDIA_PLAYER_STATE_ANNOUNCING;
+    if (playing || now - speak_asked_ >= HEARD_AFTER_MS) {
+      speak_from_ = now;
+      popup_update_();
+    }
+  }
+  // Spoken: the pipeline ran out and voice_assistant has nothing playing any more (it keeps running until the
+  // announcement finished, after the pipeline's own end).
+  if (phase_ == Phase::ANSWERING && !busy()) {
+    phase_ = Phase::IDLE;
+    tessera::refresh();
+    popup_update_();
+  }
+  if (popup_ != nullptr && !busy() && phase_ != Phase::LISTENING && !close_at_)
+    close_at_ = now + (answer_.empty() && phase_ != Phase::FAILED ? POPUP_EMPTY_MS : POPUP_AFTER_MS);
+  if (popup_ != nullptr && close_at_ && (int32_t) (now - close_at_) >= 0) {
+    popup_ = nullptr;
+    close_at_ = 0;
+    tessera::close_popup(this);
+  }
 }
 
 void VoiceAssist::listening_() {
   if (phase_ != Phase::LISTENING && is_on(wake_sound_on_)) sounds_.play(wake_sound_);
+  phase_ = Phase::LISTENING;
+  heard_.clear();
+  answer_.clear();
+  speak_asked_ = speak_from_ = close_at_ = 0;
+  popup_show_();
+}
+
+void VoiceAssist::popup_off() {
+  if (popup_ == nullptr) return;
+  popup_ = nullptr;
+  close_at_ = 0;
+  tessera::close_popup(this);
+}
+
+void VoiceAssist::popup_show_() {
+  if (popup_ != nullptr || !is_on(show_popup_on_)) return;
+  tessera::show_popup(this, [this]() {
+    popup_ = new VoicePopup([this]() { return view(); },
+                            // A tap on it stops what runs; once it is done, it closes.
+                            [this]() {
+                              if (busy()) {
+                                assistant_->request_stop();
+                              } else {
+                                popup_ = nullptr;
+                                close_at_ = 0;
+                                tessera::close_popup(this);
+                              }
+                            },
+                            // It went by itself (a tap beside it, an alert, standby, an update): what runs stops too.
+                            [this]() {
+                              popup_ = nullptr;
+                              close_at_ = 0;
+                              stop();
+                            });
+    return popup_;
+  });
+}
+
+void VoiceAssist::popup_update_() {
+  if (popup_ != nullptr) popup_->show(false);
+}
+
+std::string VoiceAssist::said_() const {
+  if (answer_.empty()) return {};
+  // A failure, and an answer the speaker is done with, show whole.
+  if (phase_ == Phase::FAILED || phase_ == Phase::IDLE) return answer_;
+  if (!speak_from_) return {};
+  const size_t chars = (size_t) ((millis() - speak_from_) * SPOKEN_CHARS_PER_S / 1000);
+  if (chars >= answer_.size()) return answer_;
+  // Whole words only, and never half a character.
+  size_t end = answer_.find(' ', chars);
+  if (end == std::string::npos) return answer_;
+  return answer_.substr(0, end);
+}
+
+PopupView VoiceAssist::view() const {
+  PopupView v;
+  // Once it is done (spoken, or nothing came of it) the disc stands still with the assistant and its name, until the
+  // popup closes.
+  v.phase = phase_;
+  v.icon = phase_ == Phase::IDLE ? ICON_ASSISTANT : phase_icon();
+  v.tone = phase_ == Phase::FAILED ? tessera::Tone::ALERT : phase_ == Phase::THINKING ? tessera::Tone::BUSY
+                                                                                       : tessera::Tone::ACCENT;
+  v.word = phase_ == Phase::IDLE ? std::string(text("name")) : phase_word();
+  v.heard = heard_;
+  v.said = said_();
+  return v;
 }
 
 void VoiceAssist::phase(Phase p) {
   if (p == Phase::LISTENING) listening_();
-  if (p == Phase::IDLE && phase_ == Phase::FAILED) {
-    // The pipeline ends after a failure too: the failure stays on the tile while it is fresh.
-  } else {
-    phase_ = p;
-  }
-  if (p == Phase::LISTENING) {
-    heard_.clear();
-    answer_.clear();
-  }
+  else phase_ = p;
   tessera::refresh();
+  popup_update_();
 }
 
 void VoiceAssist::heard(const std::string &text) {
   heard_ = text;
   tessera::refresh();
+  popup_update_();
 }
 
 void VoiceAssist::answer(const std::string &text) {
@@ -184,6 +278,29 @@ void VoiceAssist::answer(const std::string &text) {
   answered_at_ = millis();
   phase_ = Phase::ANSWERING;
   tessera::refresh();
+  popup_update_();
+}
+
+void VoiceAssist::speaking(const std::string &url) {
+  if (url.empty()) return;
+  // A streamed answer starts to play before Assist has finished it (its words come with tts_start, later): the thinking
+  // is over here, and so is a plop that is still going.
+  if (sounds_.playing(thinking_sound_)) sounds_.stop();
+  if (!speak_asked_) speak_asked_ = millis();
+  if (phase_ == Phase::LISTENING || phase_ == Phase::THINKING) {
+    phase_ = Phase::ANSWERING;
+    answered_at_ = millis();
+  }
+  tessera::refresh();
+  popup_update_();
+}
+
+void VoiceAssist::ended() {
+  // A question that came to nothing (nothing heard, "never mind") ends here; a spoken answer ends in loop(), once the
+  // speaker is done with it, and a failure stays as it is.
+  if (phase_ == Phase::LISTENING || phase_ == Phase::THINKING) phase_ = Phase::IDLE;
+  tessera::refresh();
+  popup_update_();
 }
 
 void VoiceAssist::failed(const std::string &code, const std::string &message) {
@@ -191,7 +308,9 @@ void VoiceAssist::failed(const std::string &code, const std::string &message) {
   answer_ = message.empty() ? code : message;
   answered_at_ = millis();
   phase_ = Phase::FAILED;
+  speak_asked_ = speak_from_ = 0;
   tessera::refresh();
+  popup_update_();
 }
 
 void VoiceAssist::choose_phrase(size_t index) {
@@ -202,6 +321,64 @@ void VoiceAssist::choose_phrase(size_t index) {
   tessera::refresh();
 }
 
+bool VoiceAssist::claim_wake_word_() {
+  if (wake_word_ == nullptr) return false;
+  using tessera::audio::Role;
+  using tessera::audio::Side;
+  wake_holds_ = tessera::audio::claim(
+      Side::IN, Role::VOICE, 0,
+      [this]() {
+        wake_holds_ = false;
+        wake_word_->stop();
+      },
+      [this]() {
+        wake_holds_ = true;
+        if (wake_wanted_) wake_word_->start();
+      });
+  return wake_holds_;
+}
+
+void VoiceAssist::listen(bool on) {
+  using tessera::audio::Role;
+  using tessera::audio::Side;
+  wake_wanted_ = on;
+  if (wake_word_ == nullptr) return;
+  if (on) {
+    if (claim_wake_word_()) wake_word_->start();
+    return;
+  }
+  wake_word_->stop();
+  if (!busy()) tessera::audio::release(Side::IN, Role::VOICE, 0);
+  wake_holds_ = false;
+}
+
+void VoiceAssist::session(bool on) {
+  using tessera::audio::Role;
+  using tessera::audio::Side;
+  if (on) {
+    // The same claim as the wake word's (VOICE, 0) on the microphone, and the speaker beside it: music pauses and stays
+    // paused (media waits for nothing), and a ring that takes either side stops the session.
+    const bool held = tessera::audio::claim(Side::BOTH, Role::VOICE, 0, [this]() {
+      wake_holds_ = false;
+      if (wake_word_ != nullptr) wake_word_->stop();
+      if (busy()) assistant_->request_stop();
+    });
+    if (!held && busy()) assistant_->request_stop();
+    return;
+  }
+  tessera::audio::release(Side::OUT, Role::VOICE, 0);
+  // The microphone stays the wake word's (its own answers back) while it should listen; otherwise it goes.
+  if (wake_wanted_) claim_wake_word_();
+  else tessera::audio::release(Side::IN, Role::VOICE, 0);
+}
+
+void VoiceAssist::on_interval(uint32_t) {
+  // A wake word refused the microphone (a ring had it) listens again once nobody above it holds it.
+  if (wake_wanted_ && !wake_holds_ && !busy() &&
+      tessera::audio::open(tessera::audio::Side::IN, tessera::audio::Role::VOICE) && claim_wake_word_())
+    wake_word_->start();
+}
+
 void VoiceAssist::ask() {
   if (assistant_ == nullptr) return;
   if (busy()) {
@@ -209,11 +386,9 @@ void VoiceAssist::ask() {
     return;
   }
   listening_();
-  phase_ = Phase::LISTENING;
-  heard_.clear();
-  answer_.clear();
   assistant_->request_start(false, true);
   tessera::refresh();
+  popup_update_();
 }
 
 void VoiceAssist::stop() {

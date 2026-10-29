@@ -5,8 +5,8 @@
 # sound while Assist thinks (components/voice_assist/sounds). It needs a microphone, a speaker and a media player, which
 # a board brings (features/audio.yaml) or a plugin.
 id: voice_assist
-version: 0.2.3
-api: "0.8"
+version: 0.4.0
+api: "0.19"
 icon: robot
 maintainer: MaxGramser
 license: MIT
@@ -36,3 +36,4 @@ settings:
   - { key: wake_phrase, label: setting_wake_phrase, hint: setting_wake_phrase_hint }
   - { key: wake_sound, label: setting_wake_sound, hint: setting_wake_sound_hint }
   - { key: thinking_sound, label: setting_thinking_sound, hint: setting_thinking_sound_hint }
+  - { key: show_popup, label: setting_show_popup, hint: setting_show_popup_hint }

@@ -256,9 +256,9 @@ class ReleasesTile : public tessera::Tile {
   }
 
   // The art of one place: a picture's place (w x h, the reflection's room in h), or a record of w in the middle of h.
-  void art(lv_obj_t *parent, Slot &slot, int x, int y, int w, int h) {
+  void art(lv_obj_t *parent, Slot &slot, int x, int y, int w, int h, bool block = true) {
     if (pictures_) {
-      slot.place = ui::picture(parent);
+      slot.place = ui::picture(parent, block ? tessera::Placeholder::BLOCK : tessera::Placeholder::NONE);
       lv_obj_set_size(slot.place, w, h);
       lv_obj_set_pos(slot.place, x, y);
     } else {
@@ -320,8 +320,8 @@ class ReleasesTile : public tessera::Tile {
     frames.push_back({0, centre_x_, w, nullptr});
     pitch_ = side >= w / 4 ? w / 2 + gap + side / 2 : w + gap;
     for (Slot f : frames) {
-      art(parent, f, f.x, 0, f.w, mirrored);
-      if (f.place) lv_obj_set_style_bg_opa(f.place, LV_OPA_TRANSP, 0);
+      // No block while a cover comes (plugin API 0.17): a block the height of cover and reflection reads as a bar.
+      art(parent, f, f.x, 0, f.w, mirrored, false);
       slots_.push_back(f);
     }
     badge_right_ = centre_x_ + w;

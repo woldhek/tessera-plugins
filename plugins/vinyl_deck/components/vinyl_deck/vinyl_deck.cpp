@@ -19,7 +19,7 @@ enum Key : uint8_t { DOWN, PLAY_PAUSE, UP, KEYS, NONE = KEYS };
 // A face of the screensaver's music (plugin API 0.14): the cover as a record sleeve with the record peeking out at its
 // right, the title and the artist beside it (under it on square and standing glass), and three keys.
 //
-// The cover is the step's own picture: a place with the address "saver:picture", which the app answers with the cover
+// The cover is the step's own picture: a place with the address "step:", which the app answers with the cover
 // of the player on the glass, cut to the place. The keys are made with ui::takes_taps, so a tap on them comes to
 // on_tap() and the screen stays in standby; a tap anywhere else wakes it. Play, pause and the mute go through
 // tessera::wish(): the key shows its other face at once (on_state hears the wish) and Home Assistant's answer squares
@@ -88,7 +88,7 @@ class DeckSaver : public tessera::Saver {
   }
 
   // The music step's contract: the player (`entity`), what it plays, its state, its features, whether it is muted, and
-  // `picture` ("saver:picture" while there is a cover). A wish of a finger comes here at once, in `state` and `muted`.
+  // `picture` ("step:" while there is a cover). A wish of a finger comes here at once, in `state` and `muted`.
   void on_state(JsonObjectConst data) override {
     std::snprintf(entity_, sizeof(entity_), "%s", data["entity"] | "");
     playing_ = std::string(data["state"] | "") == "playing";

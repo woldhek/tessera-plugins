@@ -8,12 +8,9 @@ All Espressif sources are pulled through the IDF component manager as managed
 components. Nothing is vendored.
 """
 
-from pathlib import Path
-
 import esphome.codegen as cg
 from esphome.components import i2c
 from esphome.components.esp32 import (
-    add_extra_build_file,
     add_idf_component,
     add_idf_sdkconfig_option,
 )
@@ -114,7 +111,9 @@ CONFIG_SCHEMA = cv.All(
             cv.Required(CONF_I2C_ID): cv.use_id(i2c.I2CBus),
             cv.Optional(CONF_DEVICE, default="jpeg"): _validate_device,
             cv.Optional(CONF_RESOLUTION, default="auto"): _validate_resolution,
-            cv.Optional(CONF_JPEG_QUALITY, default=10): cv.int_range(min=1, max=63),
+            # esp_video's JPEG quality: 1 to 100, higher is better (its encoder's default is 80),
+            # not the ESP32 camera driver's 0 to 63 where lower is better.
+            cv.Optional(CONF_JPEG_QUALITY, default=80): cv.int_range(min=1, max=100),
             cv.Optional(CONF_MAX_FRAMERATE, default=10): cv.float_range(
                 min=0.1, max=60.0
             ),
@@ -174,18 +173,8 @@ async def to_code(config):
     # Use the published component so its compatible esp_cam_sensor, esp_ipa
     # and esp_h264 dependencies are resolved by the IDF component manager.
     add_idf_component(name="espressif/esp_video", ref="2.4.1")
-    if jpeg_enabled:
-        # esp_video's manifest pulls esp_h264 on every P4 build although
-        # both its H.264 source and CMake requirement are correctly Kconfig
-        # gated. IDF local-component precedence supplies an empty dependency
-        # only for JPEG firmware; H.264 profiles resolve the real library.
-        add_extra_build_file(
-            "components/esp_h264/CMakeLists.txt",
-            Path(__file__).parent
-            / "build_stubs"
-            / "esp_h264"
-            / "CMakeLists.txt",
-        )
+    # Tessera: the empty esp_h264 a JPEG-only build takes instead of the encoder is the component esp_h264_placeholder
+    # (Screen camera's plugin.yaml), so that the video's build, which goes without it, gets a clean build folder.
     if config[CONF_ENABLE_UVC]:
         # USB-UVC host driver, aligned with esp_video 2.x's own dependency.
         add_idf_component(name="espressif/usb_host_uvc", ref="2.5.*")
@@ -220,28 +209,6 @@ async def to_code(config):
     if config[CONF_ENABLE_UVC]:
         add_idf_sdkconfig_option("CONFIG_ESP_VIDEO_ENABLE_USB_UVC_VIDEO_DEVICE", True)
 
-    # Auto-detect the MIPI-CSI sensors shipped with espressif/esp_cam_sensor over
-    # the shared I2C bus. Kconfig keys verified against esp_cam_sensor 2.4.
-    for sensor in ("SC202CS", "OV5647", "SC2336"):
-        add_idf_sdkconfig_option(f"CONFIG_CAMERA_{sensor}", True)
-        add_idf_sdkconfig_option(
-            f"CONFIG_CAMERA_{sensor}_AUTO_DETECT_MIPI_INTERFACE_SENSOR", True
-        )
-
-    # SC202CS colour tuning. The SC2356 module is the same SC202CS silicon
-    # (PID 0xeb52 @ SCCB 0x36) but ships an IPA JSON with noticeably better
-    # colour than the stock default, validated on the M5Stack Tab5 / reTerminal.
-    # Override the sensor's default IPA configuration with it. esp_cam_sensor's
-    # project_include.cmake embeds the file pointed to by the CUSTOMIZED path.
-    ipa_json = "esp_video_camera/sc202cs_ipa.json"
-    add_extra_build_file(ipa_json, Path(__file__).parent / "cfg" / "sc202cs.json")
-    add_idf_sdkconfig_option(
-        "CONFIG_CAMERA_SC202CS_DEFAULT_IPA_JSON_CONFIGURATION_FILE", False
-    )
-    add_idf_sdkconfig_option(
-        "CONFIG_CAMERA_SC202CS_CUSTOMIZED_IPA_JSON_CONFIGURATION_FILE", True
-    )
-    add_idf_sdkconfig_option(
-        "CONFIG_CAMERA_SC202CS_CUSTOMIZED_IPA_JSON_CONFIGURATION_FILE_PATH",
-        str(CORE.relative_build_path(ipa_json)),
-    )
+    # Tessera: the MIPI-CSI sensors esp_cam_sensor auto-detects, and the SC202CS's
+    # colour tuning, are Screen camera's table (components/screen_camera/sensors.py),
+    # which that component applies; see NOTICE, "Changed in Tessera's copy".

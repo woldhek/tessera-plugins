@@ -17,5 +17,5 @@ tiles:
 # commands:  answers to the questions of permissions.ha_commands
 # cards:     the entity a card of the manifest opens with
 # pictures:  a file beside this one for each address a tile's places show (plugin API 0.10)
-# savers:    the screensavers to show, each with its options, the data of its step and the file saver:picture shows
+# savers:    the screensavers to show, each with its options, the data of its step and the file step: shows
 #            (plugin API 0.14, docs/PREVIEW.md "Screensavers")

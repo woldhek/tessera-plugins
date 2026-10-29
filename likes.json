@@ -2,7 +2,7 @@
  "format": 1,
  "likes": {
   "cinema": 2,
-  "custom_card": 6,
+  "custom_card": 7,
   "electricity_price": 1,
   "flip_clock": 3,
   "microplant": 2,
@@ -15,7 +15,7 @@
   "vinyl_deck": 1,
   "voice_assist": 3,
   "waste_collection": 6,
-  "waze_traveltime": 1,
+  "waze_traveltime": 2,
   "world_clock": 2
  }
 }

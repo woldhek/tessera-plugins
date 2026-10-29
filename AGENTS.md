@@ -16,16 +16,24 @@ plugin is done.
    carries out the plugin's `fetch` (JSON from a web service) with its own code.
 4. A tile of a plugin is `plugin:<plugin id>.<tile id>` in a screen's layout. The core gives it a card's drawing area
    while its page is on the glass, hands it the data the app sent (`on_state`), and ticks it once a second (`on_tick`).
-5. The plugin API is 0.14 on Tessera's dev branch; the release, Tessera 0.4.88 (firmware 0.56.0), has 0.10 until the
+5. The plugin API is 0.24 on Tessera's dev branch; the release, Tessera 0.4.89 (firmware 0.57.0), has 0.14 until the
    next one. A manifest names the lowest minor whose
    parts it uses: `api: "0.8"`, `"0.9"` for `Font::DIGITS`, `ui::covers`, `Tone::GOOD`, `ui::set_fill` and
    `ui::tone_color`, `"0.10"` for pictures on a tile, `ui::text` and `tap_point()`, `"0.11"` for `on_press` and
    `on_step`, `"0.12"` for options that keep lists (`multiple`, `search`), a fetch with `each` or `{name|,}`,
    `tessera::action` with a JSON object, and a card's `on_tap`, `"0.13"` for pictures on a card, `"0.14"` for screensavers
-   (`savers`, `add_saver`, `ui::takes_taps`, `tessera::wish`). A plugin builds on a core with the
-   same major and at least its minor, unless a minor after its own changed a name: while the major is 0 that may
-   happen, and the core lists those minors (only 0.4 so far). So a plugin of 0.7 builds on a core of 0.14, one of 0.3
-   does not (`docs/FIRMWARE_API.md`, "Versions"). A tile's entity of a domain Tessera draws no tile for (`plant`,
+   (`savers`, `add_saver`, `ui::takes_taps`, `tessera::wish`), `"0.15"` for a tile's options of kind `entity` (entities
+   the person chooses per tile, sent under `entities`), `"0.16"` for `tessera::wake`, and `"0.17"` for pictures in one
+   system (`Placeholder::NONE`, `on_picture`, the addresses `cover:`, `camera:`, `entity:` and `step:`, and
+   `tessera::capturing` for a plugin that uses the screen's own camera), `"0.18"` for a popup (`show_popup`, `Popup`,
+   `ui::animate`), `"0.19"` for `tessera::camera_turn`, `"0.20"` for `Capture::SENSING` (the camera only sensing,
+   the dot a ring), `"0.21"` for `tessera::squeeze` (a busy screen's governor), and `"0.22"` for `tessera::own_frame` (the screen's own
+   camera on a tile of its own), `"0.23"` for `Capture::SOUND` (someone hears the microphone: the live tiles slow). A plugin builds on a core with the
+   same major and at least its minor, unless a minor after its own is listed as a break: while the major is 0 a name may
+   change its meaning, and the core lists those minors (only 0.4 so far); a form a minor takes away fails in the
+   compiler at its call instead. So a plugin of 0.7 builds on a core of 0.24, one of 0.3
+   does not (`docs/FIRMWARE_API.md`, "Versions"). 0.24 took away a second form of four things
+   (`on_touch`, the key and value `tessera::action`, `saver:picture`, `memory: { bytes }`): one form for each thing. A tile's entity of a domain Tessera draws no tile for (`plant`,
    `todo`) reaches `TileContext::entity` and `tessera::action` only with the firmware after 0.56.0, on Tessera's dev
    branch until its next release (`docs/FIRMWARE_API.md`, "A tile of an entity").
 
@@ -45,6 +53,7 @@ plugin is done.
 | A speaker, microphone or media player another plugin or the board brings | `requires.features`, or a part with `features` when the plugin also works without it | docs/MANIFEST.md, "Features" |
 | Another plugin on the same screen | `requires.plugins`: the app adds it with yours | docs/MANIFEST.md, "What it needs and brings" |
 | A screensaver: another clock, player or photo view in standby, or a step of its own (the rain radar while it rains) | `savers` in the manifest (a face: `step: clock`, `media` or `photos`; a step of its own: `step: own` with `data` or `domains` and `when`), `tessera::Saver` and `add_saver`; the step's cover or photo through `saver:picture`; keys through `ui::takes_taps` and `tessera::wish` | docs/FIRMWARE_API.md, "A screensaver"; docs/MANIFEST.md, "savers" |
+| Something over the screen for a moment: a voice assistant's question and answer, a timer that went off | A popup (0.18): `tessera::show_popup` with a `tessera::Popup`, a close key in its corner, `ui::animate` for what moves | docs/FIRMWARE_API.md, "A popup" |
 | A server, an account, a live session (OAuth, a websocket, a voice model) | A Home Assistant integration of its own, which the plugin reaches through its entities and actions | docs/MAKING_A_PLUGIN.md, "Where the backend lives" |
 
 ## Read in this order
@@ -61,7 +70,7 @@ The two plugins to copy from: [`template/`](template) (a tile without data, the 
 [`plugins/ov_departures/`](plugins/ov_departures) (a tile with data from a web service, a list of choices and a
 countdown). For the other parts: [`plugins/waste_collection/`](plugins/waste_collection) (a tile of an entity, a card,
 a tap action, a top bar item, settings), [`plugins/voice_assist/`](plugins/voice_assist) (features it needs, sounds of
-its own, ESPHome components of its own, a top bar item in colour) and [`plugins/screen_camera/`](plugins/screen_camera)
+its own, ESPHome components of its own, a top bar item in colour, a popup with parts that move) and [`plugins/screen_camera/`](plugins/screen_camera)
 (a board's hardware through a feature only a board brings, and a driver beside the plugin's own component) and
 [`plugins/picture_frame/`](plugins/picture_frame) (pictures on a tile: an entity's own picture or an address, cover or
 contain, with the name over it). Screensavers: [`plugins/flip_clock/`](plugins/flip_clock) (a face of the clock, no
@@ -114,6 +123,15 @@ pictures, every board), [`plugins/vinyl_deck/`](plugins/vinyl_deck) (a face of t
     warns when a saver looks the same two minutes later.
   - **A face draws only from its step's contract**, a step of its own from its fetch and entity, through the app; read
     every option with its default (`c.options["seconds"] | true`).
+- **A popup** (0.18) keeps its own rules:
+  - **Lay it out from the top; the card follows** its parts up to `context.height`. Hide a part that has nothing to say
+    instead of leaving a gap; show the first or the last lines of a long text yourself, it never scrolls.
+  - **The close key is the core's**, in the room's top right corner: keep your first row `context.corner` from the
+    right, and give an icon or disc at the top left `context.key` as its size, so the two stand on one line.
+  - **Motion only here**, with `ui::animate` and `ui::still`, never a timer or `lv_anim` of your own; keep moving parts
+    small and still them when their moment is over.
+  - **It lights the screen**: show one because a person did something, or behind a setting of the plugin's own, on by
+    default only when a person asked for what it shows (the voice assistant's Show popup).
 - **Memory inside the chip is scarce** (since API 0.10): keep texts and lists a tile holds as `tessera::Text` and
   `tessera::List`, which take PSRAM; a `std::string` member stays in the memory Wi-Fi needs (docs/FIRMWARE_API.md,
   "Memory").

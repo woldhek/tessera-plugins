@@ -33,6 +33,11 @@ extern "C" {
 #include "esp_intr_alloc.h"
 #include "usb/usb_host.h"
 #endif
+#if CONFIG_IDF_TARGET_ESP32P4
+#include "soc/isp_struct.h"
+#include "soc/mipi_csi_bridge_struct.h"
+#include "soc/mipi_csi_host_struct.h"
+#endif
 }
 
 #ifndef V4L2_CID_JPEG_COMPRESSION_QUALITY
@@ -42,6 +47,38 @@ extern "C" {
 namespace esphome::esp_video_camera {
 
 static const char *const TAG = "esp_video_camera";
+// The field of view's names (set_field), for the log.
+static const char *const FIELD_NAMES[] = {"Sharp", "Full"};
+// The sensor that offers a field of view other than its format's own (camera_sensor.h), defined with the sensors below;
+// nullptr while none does, and the camera keeps its own mode.
+static const tessera_camera_sensor_t *field_sensor();
+// What that sensor says it does (the OV02C10: binning, window and output), into `report`; false when it says nothing.
+static bool field_report(char *report, size_t size);
+
+#if CONFIG_IDF_TARGET_ESP32P4
+// What the P4's MIPI receiver, CSI bridge and ISP saw when a field of view stalls (from a Guition tester's test
+// build, Jeroen Peters, 2026-10-25). The receiver's int_st_* clear when read; the bridge's and the ISP's int_raw stay
+// until the driver clears them. Bridge int_raw bit 0: the frame had fewer lines than set, bit 1 more, bit 2 a frame
+// cut short, bits 3 and 4 an overrun. ISP int_raw bit 0 a data type error, 3 a size setting error, 5 a line length
+// unlike the setting.
+// MIPI main bit 2 with bndry bit 0 is a frame start on virtual channel 0 that never got its frame end. Two short lines
+// in hexadecimal, so a log that cuts lines at 256 characters keeps all of it.
+static void log_p4_capture_state(const char *field) {
+  ESP_LOGW(TAG,
+           "Field of view %s: P4 MIPI main %x phy_fatal %x pkt_fatal %x bndry %x seq %x crc %x pld_crc %x data_id %x "
+           "phy %x stopstate %x",
+           field, (unsigned) MIPI_CSI_HOST.int_st_main.val, (unsigned) MIPI_CSI_HOST.int_st_phy_fatal.val,
+           (unsigned) MIPI_CSI_HOST.int_st_pkt_fatal.val, (unsigned) MIPI_CSI_HOST.int_st_bndry_frame_fatal.val,
+           (unsigned) MIPI_CSI_HOST.int_st_seq_frame_fatal.val, (unsigned) MIPI_CSI_HOST.int_st_crc_frame_fatal.val,
+           (unsigned) MIPI_CSI_HOST.int_st_pld_crc_fatal.val, (unsigned) MIPI_CSI_HOST.int_st_data_id.val,
+           (unsigned) MIPI_CSI_HOST.int_st_phy.val, (unsigned) MIPI_CSI_HOST.phy_stopstate.val);
+  ESP_LOGW(TAG, "Field of view %s: P4 bridge int_raw %x frame_cfg %x (%u lines, %u wide); ISP int_raw %x int_ena %x "
+           "frame_cfg %x",
+           field, (unsigned) MIPI_CSI_BRIDGE.int_raw.val, (unsigned) MIPI_CSI_BRIDGE.frame_cfg.val,
+           (unsigned) MIPI_CSI_BRIDGE.frame_cfg.vadr_num, (unsigned) MIPI_CSI_BRIDGE.frame_cfg.hadr_num,
+           (unsigned) ISP.int_raw.val, (unsigned) ISP.int_ena.val, (unsigned) ISP.frame_cfg.val);
+}
+#endif
 
 // ===========================================================================
 // Pipeline init helpers (run esp_video_init on core 0, optional LEDC XCLK)
@@ -648,18 +685,21 @@ void ESPVideoCamera::capture_task_run_() {
       this->schedule_capture_retry_();
       continue;
     }
-    // Fresh descriptors require the current runtime controls.
+    // Fresh descriptors require the current runtime controls, and the sensor its frame rate again: a start hands it its
+    // format, which sets the format's own.
     this->ctrls_dirty_.store(true);
+    this->fps_active_ = -1;
     if (this->is_raw_csi_)
       this->raw_warmup_until_ms_ = millis() + RAW_WARMUP_MS;
     while (this->capture_task_running_.load(std::memory_order_acquire) &&
            this->capture_wanted_.load(std::memory_order_acquire) &&
-           !this->capture_faulted_.load(std::memory_order_acquire)) {
+           !this->capture_faulted_.load(std::memory_order_acquire) && !this->field_pending_()) {
       // VIDIOC_DQBUF sleeps on esp_video's frame queue. Its driver timeout is
       // only a dead-sensor/teardown watchdog; a healthy source wakes this task
       // exactly when a frame becomes ready.
       // Pick up HA/web control changes between frames.
       this->apply_runtime_ctrls_();
+      this->apply_frame_rate_();
       if (this->is_hw_jpeg_ || this->is_raw_csi_) {
         this->loop_jpeg_pipeline_();
       } else {
@@ -667,9 +707,24 @@ void ESPVideoCamera::capture_task_run_() {
       }
     }
     if (this->capture_faulted_.load(std::memory_order_acquire)) {
+      // A fault in a field of view of the driver's before it ran its first ten seconds (no frame, or a few and then
+      // none): back to the sensor's own mode, with the retries anew. A Guition 4.3-inch kept its Full mode through four
+      // time-outs when only "no frame at all" counted (GitHub issue #326).
+      if (this->field_active_ != 0 && (this->field_frames_ == 0 || !this->field_told_)) {
+#if CONFIG_IDF_TARGET_ESP32P4
+        // Before the capture stops, while the receiver and the ISP still hold what they saw.
+        log_p4_capture_state(FIELD_NAMES[this->field_active_]);
+#endif
+        this->field_failed_(this->field_frames_ == 0 ? "no frame came in it" : "its frames stopped");
+        this->capture_retry_attempts_.store(0, std::memory_order_release);
+      }
       if (this->stop_capture_())
         this->capture_faulted_.store(false, std::memory_order_release);
       this->schedule_capture_retry_();
+    } else if (this->field_pending_() && this->capture_wanted_.load(std::memory_order_acquire)) {
+      // A new field of view while streaming: a fresh start hands the sensor its format and sizes the capture anew.
+      this->stop_capture_();
+      xTaskNotifyGive(xTaskGetCurrentTaskHandle());
     } else {
       // No consumers remain. Stop the hardware clocks/queues, retain the
       // prepared MMAP buffers, then block again on the task notification.
@@ -748,6 +803,21 @@ void ESPVideoCamera::loop_jpeg_pipeline_() {
     this->capture_faulted_.store(true, std::memory_order_release);
     this->capture_wanted_.store(false, std::memory_order_release);
     return;
+  }
+  this->field_frames_++;
+  // The first frames of a field of view of the driver's, as the capture got them.
+  if (this->field_active_ != 0 && this->field_frames_ <= 3)
+    ESP_LOGI(TAG, "Field of view %s: frame %u, %u bytes (%u expected), %u ms after the change",
+             FIELD_NAMES[this->field_active_], (unsigned) this->field_frames_, (unsigned) cap_buf.bytesused,
+             (unsigned) this->capture_frame_bytes_, (unsigned) (millis() - this->field_since_ms_));
+  if (!this->field_told_ && millis() - this->field_since_ms_ >= 10000) {
+    this->field_told_ = true;
+    ESP_LOGI(TAG, "Field of view %s: %.1f frames a second over its first 10 s, %ux%u", FIELD_NAMES[this->field_active_],
+             this->field_frames_ * 1000.0f / (millis() - this->field_since_ms_), (unsigned) this->capture_width_,
+             (unsigned) this->capture_height_);
+    char report[256];
+    if (field_report(report, sizeof(report)))
+      ESP_LOGI(TAG, "Field of view %s: the sensor says %s", FIELD_NAMES[this->field_active_], report);
   }
 
   bool raw_requeued = false;
@@ -1121,6 +1191,127 @@ bool ESPVideoCamera::start_jpeg_frame_consumer(
   return true;
 }
 
+// Tessera: see the header. Exposure is in sensor lines (V4L2_CID_EXPOSURE), each the format's tline_ns long; gain is
+// either a number (relative to its minimum) or an index into a menu of gains (relative to the menu's first).
+// ---- The sensors (camera_sensor.h) ----
+// The drivers that found their sensor, in the order they added themselves: one camera on a board, so one in practice.
+static constexpr int MAX_SENSORS = 4;
+static const tessera_camera_sensor_t *s_sensors[MAX_SENSORS] = {};
+static std::atomic<int> s_sensor_count{0};
+
+extern "C" void tessera_camera_add_sensor(const tessera_camera_sensor_t *sensor) {
+  const int n = s_sensor_count.load(std::memory_order_acquire);
+  if (sensor == nullptr || n >= MAX_SENSORS) return;
+  for (int i = 0; i < n; ++i)
+    if (s_sensors[i] == sensor) return;
+  s_sensors[n] = sensor;
+  s_sensor_count.store(n + 1, std::memory_order_release);
+  ESP_LOGI(TAG, "Camera sensor %s: its frame rate %s, %s", sensor->name ? sensor->name : "?",
+           sensor->set_fps ? "can change while it streams" : "stays its format's own",
+           sensor->field_format ? "a mode over its whole field of view" : "its format's field of view only");
+}
+
+static const tessera_camera_sensor_t *field_sensor() {
+  const int n = s_sensor_count.load(std::memory_order_acquire);
+  for (int i = 0; i < n; ++i)
+    if (s_sensors[i]->field_format != nullptr) return s_sensors[i];
+  return nullptr;
+}
+
+static bool field_report(char *report, size_t size) {
+  const tessera_camera_sensor_t *sensor = field_sensor();
+  return sensor != nullptr && sensor->field_report != nullptr && sensor->field_report(report, size) > 0;
+}
+
+// On the capture task, between two frames: the sensor's frame rate as wanted, once per change and after every start.
+void ESPVideoCamera::apply_frame_rate_() {
+  if (this->fps_report_at_ms_ != 0 && static_cast<int32_t>(millis() - this->fps_report_at_ms_) >= 0) {
+    this->fps_report_at_ms_ = 0;
+    char report[128];
+    if (this->fps_sensor_->frame_report(report, sizeof(report)) > 0) {
+      if (this->fps_active_ == 0)
+        ESP_LOGI(TAG, "Camera at its format's own frame rate: the sensor holds %s", report);
+      else
+        ESP_LOGI(TAG, "Camera at %d frames a second asked: the sensor holds %s", this->fps_active_, report);
+    }
+  }
+  const int want = this->fps_wanted_.load(std::memory_order_acquire);
+  if (want == this->fps_active_) return;
+  this->fps_active_ = want;
+  // A capture that thins its frames itself (its JPEG device asks the receiver for fewer than the sensor makes) would
+  // thin a slower sensor once more: it keeps the sensor's own rate.
+  const bool thins = this->csi_divides_ && !this->is_raw_csi_;
+  const int n = s_sensor_count.load(std::memory_order_acquire);
+  for (int i = 0; i < n && !thins; ++i) {
+    const tessera_camera_sensor_t *sensor = s_sensors[i];
+    if (sensor->set_fps == nullptr) continue;
+    const int set = sensor->set_fps(want);
+    if (set <= 0) continue;
+    if (want == 0)
+      ESP_LOGI(TAG, "Camera at %d frames a second, its format's own (%s)", set, sensor->name);
+    else
+      ESP_LOGI(TAG, "Camera at %d frames a second in the sensor, %d asked (%s)", set, want, sensor->name);
+    // What took, read back once the sensor reached a frame's end.
+    if (sensor->frame_report != nullptr) {
+      this->fps_sensor_ = sensor;
+      this->fps_report_at_ms_ = millis() + 1000;
+    }
+    return;
+  }
+  if (want != 0 && !this->fps_told_) {
+    this->fps_told_ = true;
+    ESP_LOGI(TAG, "The camera keeps its sensor's own frame rate: %s",
+             thins ? "its picture device thins the frames itself" : "this sensor cannot change it while it streams");
+  }
+}
+
+bool ESPVideoCamera::read_sensor_exposure(float *exposure_us, float *gain) {
+  if (this->capture_fd_ < 0)
+    return false;
+  struct v4l2_ext_control control {};
+  struct v4l2_ext_controls controls {};
+  controls.count = 1;
+  controls.controls = &control;
+
+  control.id = V4L2_CID_EXPOSURE;
+  controls.ctrl_class = V4L2_CID_CAMERA_CLASS;
+  if (ioctl(this->capture_fd_, VIDIOC_G_EXT_CTRLS, &controls) != 0)
+    return false;
+  const int32_t lines = control.value;
+  esp_cam_sensor_format_t format {};
+  if (ioctl(this->capture_fd_, VIDIOC_G_SENSOR_FMT, &format) != 0 || format.isp_info == nullptr ||
+      format.isp_info->isp_v1_info.tline_ns == 0)
+    return false;
+  *exposure_us = lines * (format.isp_info->isp_v1_info.tline_ns / 1000.0f);
+
+  struct v4l2_query_ext_ctrl query {};
+  query.id = V4L2_CID_GAIN;
+  if (ioctl(this->capture_fd_, VIDIOC_QUERY_EXT_CTRL, &query) != 0) {
+    *gain = 1.0f;  // a sensor without a gain control: exposure alone
+    return true;
+  }
+  control = {};
+  control.id = V4L2_CID_GAIN;
+  controls.ctrl_class = V4L2_CID_USER_CLASS;
+  if (ioctl(this->capture_fd_, VIDIOC_G_EXT_CTRLS, &controls) != 0)
+    return false;
+  if (query.type == V4L2_CTRL_TYPE_INTEGER_MENU) {
+    struct v4l2_querymenu menu {};
+    menu.id = V4L2_CID_GAIN;
+    menu.index = query.minimum;
+    if (ioctl(this->capture_fd_, VIDIOC_QUERYMENU, &menu) != 0 || menu.value <= 0)
+      return false;
+    const float base = static_cast<float>(menu.value);
+    menu.index = control.value;
+    if (ioctl(this->capture_fd_, VIDIOC_QUERYMENU, &menu) != 0)
+      return false;
+    *gain = menu.value / base;
+  } else {
+    *gain = query.minimum > 0 ? static_cast<float>(control.value) / query.minimum : 1.0f;
+  }
+  return *gain > 0;
+}
+
 void ESPVideoCamera::stop_jpeg_frame_consumer(
     JpegFrameConsumer *consumer) {
   if (consumer == nullptr ||
@@ -1159,6 +1350,15 @@ void ESPVideoCamera::schedule_capture_retry_() {
   if (!this->has_consumers_()) return;
   const uint8_t attempt =
       this->capture_retry_attempts_.fetch_add(1, std::memory_order_acq_rel);
+  // Capture task: a field of view that does not recover goes back to the sensor's own mode and tries again, whoever
+  // takes the frames (the video, a still, sensing), rather than waiting for the next request.
+  if (attempt >= MAX_CAPTURE_RETRIES && this->field_active_ != 0) {
+    this->field_failed_("the camera did not recover in it");
+    this->capture_retry_attempts_.store(0, std::memory_order_release);
+    this->capture_retry_requested_.store(true, std::memory_order_release);
+    this->enable_loop_soon_any_context();
+    return;
+  }
   if (attempt >= MAX_CAPTURE_RETRIES) {
     if (attempt == MAX_CAPTURE_RETRIES) {
       ESP_LOGE(TAG,
@@ -1291,6 +1491,7 @@ bool ESPVideoCamera::configure_capture_framerate_() {
     target_fps--;
 
   if (target_fps == reported_fps) {
+    this->csi_divides_ = false;
     ESP_LOGI(TAG, "Capture framerate: %u fps", (unsigned) reported_fps);
     return true;
   }
@@ -1313,6 +1514,7 @@ bool ESPVideoCamera::configure_capture_framerate_() {
       actual.parm.capture.timeperframe.denominator > 0) {
     const uint32_t actual_fps =
         actual.parm.capture.timeperframe.denominator;
+    this->csi_divides_ = actual_fps < source_fps;
     ESP_LOGI(TAG, "Capture framerate: %u fps (source %u fps)",
              (unsigned) actual_fps,
              (unsigned) source_fps);
@@ -1541,6 +1743,9 @@ bool ESPVideoCamera::start_capture_() {
   }
   if (this->is_failed())
     return false;
+  // A new field of view: the buffers are another size, so the capture starts afresh (start_jpeg_pipeline_).
+  if (this->capture_prepared_ && this->field_pending_() && !this->stop_capture_())
+    return false;
   if (this->capture_prepared_) {
     if (!this->resume_capture_())
       return false;
@@ -1708,6 +1913,63 @@ bool ESPVideoCamera::start_direct_capture_() {
   return true;
 }
 
+// ---- The field of view (set_field) ----
+// The sensor's own format as it was at the first start, given back to it for Sharp. The driver keeps a pointer to the
+// format it was given, so it lives here, for as long as the camera.
+static esp_cam_sensor_format_t s_own_format;
+static bool s_own_saved = false;
+
+void ESPVideoCamera::set_field(int field) {
+  if (field < 0 || field > 1) field = 0;
+  this->field_wanted_.store(field, std::memory_order_release);
+  if (this->capture_task_ != nullptr) xTaskNotifyGive(this->capture_task_);
+}
+
+void ESPVideoCamera::field_failed_(const char *why) {
+  if (this->field_wanted_.exchange(0, std::memory_order_acq_rel) != 0 || this->field_active_ != 0) {
+    ESP_LOGW(TAG, "Field of view back to Sharp: %s", why);
+    // What the sensor made of the mode that failed, for the tester's report.
+    char report[256];
+    if (this->field_active_ != 0 && field_report(report, sizeof(report)))
+      ESP_LOGW(TAG, "Field of view %s: the sensor said %s", FIELD_NAMES[this->field_active_], report);
+    this->field_fell_back_.store(true, std::memory_order_release);
+  }
+}
+
+// Capture task, before the capture's format: the sensor in the wanted mode. Sharp at the first start writes nothing.
+void ESPVideoCamera::apply_field_() {
+  esp_cam_sensor_format_t now;
+  memset(&now, 0, sizeof(now));
+  if (ioctl(this->capture_fd_, VIDIOC_G_SENSOR_FMT, &now) != 0) return;
+  if (!s_own_saved) {
+    s_own_format = now;
+    s_own_saved = true;
+  }
+  int want = this->field_wanted_.load(std::memory_order_acquire);
+  const esp_cam_sensor_format_t *format = &s_own_format;
+  if (want != 0) {
+    const tessera_camera_sensor_t *sensor = field_sensor();
+    format = sensor != nullptr ? sensor->field_format(want) : nullptr;
+    if (format == nullptr) {
+      this->field_failed_("this camera has no such mode");
+      want = 0;
+      format = &s_own_format;
+    }
+  }
+  if (want == this->field_active_) return;
+  if (ioctl(this->capture_fd_, VIDIOC_S_SENSOR_FMT, format) != 0) {
+    ESP_LOGW(TAG, "The sensor took no format %s: %s", format->name, strerror(errno));
+    if (want != 0) this->field_failed_("the sensor took no such format");
+    return;
+  }
+  this->field_active_ = want;
+  this->field_since_ms_ = millis();
+  this->field_frames_ = 0;
+  this->field_told_ = false;
+  ESP_LOGI(TAG, "Field of view %s: the sensor's format %s, %ux%u", FIELD_NAMES[want], format->name,
+           (unsigned) format->width, (unsigned) format->height);
+}
+
 bool ESPVideoCamera::start_jpeg_pipeline_() {
   // Stage 1: sensor/ISP capture device. The H.264 consumer asks for the P4's
   // encoder-native optimized YUV420 layout; the JPEG path keeps RGB565.
@@ -1722,6 +1984,8 @@ bool ESPVideoCamera::start_jpeg_pipeline_() {
                   RawVideoPixelFormat::YUV420_OUYY_EVYY
           ? V4L2_PIX_FMT_YUV420
           : V4L2_PIX_FMT_RGB565;
+  if (this->is_raw_csi_)
+    this->apply_field_();
   if (!this->configure_capture_format_(capture_format))
     return false;
   this->hardware_framerate_active_.store(

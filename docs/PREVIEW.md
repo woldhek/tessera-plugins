@@ -199,7 +199,7 @@ savers:                        # the screensavers to show (plugin API 0.14); wit
     name: Playing              # the name of its pictures (default: the saver's name)
     options: { keys: true }    # its options, as the Screensaver card sets them
     data: { title: Evening Drive, artist: Nova Coast, state: playing }   # over the step's sample (below)
-    picture: preview/cover.png # what saver:picture shows: the music's cover, the photos' photo
+    picture: preview/cover.png # what step: shows: the music's cover, the photos' photo
   - saver: rain                # a step of its own: from `answers` and `states`, as a tile
     entity: weather.home
 
@@ -241,11 +241,11 @@ What a saver gets, unless `data` says otherwise (`data` goes over it, field by f
 | Step | The sample |
 |---|---|
 | clock | `temperature: "21°"`, `items: []` |
-| media | the player `media_player.living_room` ("Living room") playing "Evening Drive" by "Nova Coast" from "Coastlines", every key in `features` (PAUSE, VOLUME_SET, VOLUME_MUTE, the tracks, VOLUME_STEP, PLAY), not muted, `volume: 0.4`, `picture: saver:picture`, a `mark` and a `colour` |
-| photos | `picture: saver:picture`, a `mark`, photo 3 of 24 of the album "Summer" |
+| media | the player `media_player.living_room` ("Living room") playing "Evening Drive" by "Nova Coast" from "Coastlines", every key in `features` (PAUSE, VOLUME_SET, VOLUME_MUTE, the tracks, VOLUME_STEP, PLAY), not muted, `volume: 0.4`, `picture: step:`, a `mark` and a `colour` |
+| photos | `picture: step:`, a `mark`, photo 3 of 24 of the album "Summer" |
 | own | the app's own shaping, as for a tile: the answer of its fetch from `answers` (or the example's own `answers`) and its entity (`entity`, from `states`); `data` gives it whole instead |
 
-- **The picture of the step** (`saver:picture`): the file of the example's `picture`, relative to the plugin's folder,
+- **The picture of the step** (`step:`): the file of the example's `picture`, relative to the plugin's folder,
   or a drawn cover for the music and a drawn landscape for the photos. Any other address of a saver's places comes from
   `pictures`, as for a tile.
 - **Where a saver shows.** The music and the photos show only on a screen with pictures, so the bench shows a face of
