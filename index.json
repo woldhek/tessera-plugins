@@ -1,6 +1,6 @@
 {
  "format": 1,
- "generated": "2026-10-29T18:33:16Z",
+ "generated": "2026-10-29T20:04:48Z",
  "plugin_api": "0.14",
  "blocked": [],
  "featured": [
@@ -1102,13 +1102,13 @@
    "label": "tessera",
    "status": "ok",
    "release": {
-    "version": "0.2.0",
-    "sha": "947f2a3e9350aade14200ff103f47b73c0244192",
+    "version": "0.2.1",
+    "sha": "74c6a75992a140a2cc0da5c9054db5ff0ca5aed2",
     "date": "2026-10-29"
    },
    "manifest": {
     "id": "ha_task_list",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "api": "0.12",
     "icon": "format-list-bulleted",
     "maintainer": "woldhek",
@@ -1127,7 +1127,7 @@
        "min": "1x1",
        "max": "3x4"
       },
-      "memory": 6000,
+      "memory": 2900,
       "domains": [
        "todo"
       ],
@@ -1215,7 +1215,7 @@
     "en": "# Task List\n\nYour Home Assistant to-do lists (`todo` entities) on a Tessera screen: Local To-do, Shopping List, Google Tasks,\nTodoist, CalDAV and any other integration that makes a to-do list.\n\n- Every task is a row with a round checkbox: tap it to tick the task off, tap again to untick it.\n- A task with a due date or a description shows it on a second line. \"Overdue\" is red, \"Today\" amber. Not every\n  integration keeps due dates (the Shopping List does not).\n- The tile shows as many tasks as fit, then \"3 more\". Tap there, or anywhere below the tasks, to open the whole list on\n  a card, and page through it with the arrows at the bottom.\n- Done tasks stay out of sight unless you turn on **Show completed tasks**; on the card they always show, at the bottom.\n\nA list shows up to about 25 to 30 tasks: what fits in one answer from Home Assistant to the screen.\n\n## Set up\n\n1. Add the plugin to a screen in the Tessera app.\n2. In Layout, place the **Tasks** tile from the plugin library.\n3. In the inspector, choose your to-do list as the tile's entity.\n4. Optionally, turn on **Show completed tasks**.\n5. Build and install the screen.\n"
    },
    "changelog": {
-    "en": "# Changelog\n\n## 0.2.0\n- A new look: every task is a row with a round checkbox, and done tasks are greyed out.\n- When a task has a due date or a description, it shows under the task: \"Today\", \"Tomorrow\", \"Overdue\" in red.\n- The tile shows as many tasks as fit and \"3 more\" when the list is longer; tap there to open the whole list on a\n  card and page through it with the arrows at the bottom.\n- New tile option: Show completed tasks (off by default).\n- Tap a task on the tile or the card to tick it off or untick it.\n## 0.1.1\n- Make it work?\n## 0.1.0\n- First version: a tile that counts the days until a date you choose.\n"
+    "en": "# Changelog\n\n## 0.2.1\n- The tile takes half the memory it did (2.9 KB instead of 6 KB of the screen's room for tiles): fewer parts per row,\n  at most eight rows, spread out over a tall tile.\n- The tile keeps only the tasks it shows, which matters on a screen without PSRAM (the CYD).\n## 0.2.0\n- A new look: every task is a row with a round checkbox, and done tasks are greyed out.\n- When a task has a due date or a description, it shows under the task: \"Today\", \"Tomorrow\", \"Overdue\" in red.\n- The tile shows as many tasks as fit and \"3 more\" when the list is longer; tap there to open the whole list on a\n  card and page through it with the arrows at the bottom.\n- New tile option: Show completed tasks (off by default).\n- Tap a task on the tile or the card to tick it off or untick it.\n## 0.1.1\n- Make it work?\n## 0.1.0\n- First version: a tile that counts the days until a date you choose.\n"
    },
    "image": "store.png"
   },
