@@ -1,25 +1,37 @@
-# What tools/preview.py shows: the data of your tiles on every kind of screen (docs/PREVIEW.md). Every part is
-# optional; without this file each tile type is shown once with its defaults. Never put a secret here.
+# What tools/preview.py shows: the tile and its card with a list as Home Assistant answers todo.get_items
+# (docs/PREVIEW.md). The bench gives the same answer to every question, whatever its status filter: the tile leaves
+# the done items out itself unless show_completed is on.
 tiles:
   - tile: tasks
-    size: 2x2
-    options:
-      entity: todo.shopping_list
-    data:
+    name: Household
+    entity: todo.household
+    options: { show_completed: false }
+  - tile: tasks
+    name: With done tasks
+    entity: todo.household
+    options: { show_completed: true }
+    sizes: [2x2, 3x4]
+
+states:
+  todo.household:
+    state: "9"
+    attributes: { friendly_name: Household }
+
+commands:
+  "call_service:todo.get_items":
+    todo.household:
       items:
-        - uid: "1"
-          summary: "Boodschappen doen"
-          status: "needs_action"
-        - uid: "2"
-          summary: "Tessera plugin testen"
-          status: "completed"
+        - { uid: 6f1c2a90-0001, summary: Call the plumber, status: needs_action, due: "{now-1d}" }
+        - { uid: 6f1c2a90-0002, summary: Groceries, status: needs_action, due: "{now+0d}", description: "Milk, eggs, bread" }
+        - { uid: 6f1c2a90-0003, summary: Water the plants, status: needs_action }
+        - { uid: 6f1c2a90-0004, summary: Book the car service, status: needs_action, due: "{now+2d}" }
+        - { uid: 6f1c2a90-0005, summary: Return library books, status: needs_action }
+        - { uid: 6f1c2a90-0006, summary: Pay the energy bill, status: needs_action, due: "{now+9d}" }
+        - { uid: 6f1c2a90-0007, summary: Clean the gutters before the winter storms come, status: needs_action }
+        - { uid: 6f1c2a90-0008, summary: Birthday present for Anna, status: needs_action, due: "{now+5d}" }
+        - { uid: 6f1c2a90-0009, summary: Change the smoke alarm batteries, status: needs_action }
+        - { uid: 6f1c2a90-0010, summary: Take out the paper, status: completed }
+        - { uid: 6f1c2a90-0011, summary: Fix the bike light, status: completed }
 
-
-
-# answers:   the answer of each fetch by its id, as the web service gives it (docs/PREVIEW.md)
-# states:    entities as Home Assistant has them, for a tile of an entity or a homeassistant sensor of plugin.yaml
-# commands:  answers to the questions of permissions.ha_commands
-# cards:     the entity a card of the manifest opens with
-# pictures:  a file beside this one for each address a tile's places show (plugin API 0.10)
-# savers:    the screensavers to show, each with its options, the data of its step and the file saver:picture shows
-#            (plugin API 0.14, docs/PREVIEW.md "Screensavers")
+cards:
+  - { card: list, entity: todo.household }
