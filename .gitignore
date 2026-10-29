@@ -2,3 +2,4 @@ tools/.cache/
 __pycache__/
 .esphome/
 .preview/
+.DS_Store
