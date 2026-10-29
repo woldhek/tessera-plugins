@@ -68,14 +68,17 @@ static uint32_t ask_items(HaTaskList *plugin, const tessera::Text &entity, bool 
 }
 
 // The items of an answer {"re", "ok", "result": {"todo.x": {"items": [...]}}}: open ones first in the list's own
-// order, then the done ones (only with `completed`). False when the answer says it failed.
-static bool read_items(JsonObjectConst message, const tessera::Text &entity, bool completed, Tasks &out) {
+// order, then the done ones (only with `completed`), at most `most` of them; `total` counts them all. False when the
+// answer says it failed.
+static bool read_items(JsonObjectConst message, const tessera::Text &entity, bool completed, Tasks &out, int most,
+                       int *total = nullptr) {
   if (!(message["ok"] | false)) return false;
   JsonObjectConst result = message["result"].as<JsonObjectConst>();
   JsonArrayConst items = result[roomy::plain(entity)]["items"].as<JsonArrayConst>();
   if (items.isNull()) items = result["items"].as<JsonArrayConst>();
   out.clear();
   Tasks done;
+  int open_count = 0, done_count = 0;
   for (JsonObjectConst item : items) {
     const char *text = item["summary"] | "";
     if (!*text) continue;
@@ -86,15 +89,19 @@ static bool read_items(JsonObjectConst message, const tessera::Text &entity, boo
     t.due = day_of(item["due"] | "");
     t.completed = std::strcmp(item["status"] | "", "completed") == 0;
     if (t.completed) {
-      if (completed && static_cast<int>(done.size()) < MAX_TASKS) done.push_back(t);
-    } else if (static_cast<int>(out.size()) < MAX_TASKS) {
-      out.push_back(t);
+      if (!completed) continue;
+      ++done_count;
+      if (static_cast<int>(done.size()) < most) done.push_back(t);
+    } else {
+      ++open_count;
+      if (static_cast<int>(out.size()) < most) out.push_back(t);
     }
   }
   for (const auto &t : done) {
-    if (static_cast<int>(out.size()) >= MAX_TASKS) break;
+    if (static_cast<int>(out.size()) >= most) break;
     out.push_back(t);
   }
+  if (total) *total = open_count + done_count;
   return true;
 }
 
@@ -145,21 +152,19 @@ void TaskRows::make(HaTaskList *plugin, lv_obj_t *parent, int width, int slots, 
   const int d = box_size(), x = text_x();
   for (int i = 0; i < count_; ++i) {
     Slot &s = slots_[i];
-    s.line = ui::block(parent, theme::LINE);
-    lv_obj_set_style_radius(s.line, 0, 0);
-    lv_obj_set_size(s.line, std::max(1, width - x), std::max(1, ui::px(1)));
-    s.box = ui::block(parent, theme::ACCENT);
+    // The box: a round label, its check centred in it (the icon's line is taller than the box: lift it by half).
+    s.box = ui::label(parent, Font::ICON_SMALL, theme::ON_ACCENT);
+    lv_label_set_long_mode(s.box, LV_LABEL_LONG_MODE_CLIP);
     lv_obj_set_size(s.box, d, d);
     lv_obj_set_style_radius(s.box, LV_RADIUS_CIRCLE, 0);
-    lv_obj_add_flag(s.box, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
-    s.check = ui::label(s.box, Font::ICON_SMALL, theme::ON_ACCENT);
-    ui::set_text(s.check, ui::icon(ICON_CHECK));
-    lv_obj_center(s.check);
+    lv_obj_set_style_text_align(s.box, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_pad_top(s.box, (d - ui::line_height(Font::ICON_SMALL)) / 2, 0);
     s.title = ui::label(parent, title, theme::INK);
     lv_obj_set_width(s.title, std::max(1, width - x));
     s.sub = ui::label(parent, Font::BODY, theme::MUTED);
     lv_obj_set_width(s.sub, std::max(1, width - x));
-    for (auto *o : {s.line, s.box, s.title, s.sub}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    for (auto *o : {s.title, s.sub}) lv_obj_set_style_border_side(o, LV_BORDER_SIDE_BOTTOM, 0);
+    for (auto *o : {s.box, s.title, s.sub}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
   }
 }
 
@@ -205,39 +210,55 @@ void TaskRows::paint(Slot &s, const TaskItem &t, bool force) {
     if (t.completed) {
       lv_obj_set_style_bg_opa(s.box, LV_OPA_COVER, 0);
       lv_obj_set_style_border_width(s.box, 0, 0);
-      lv_obj_remove_flag(s.check, LV_OBJ_FLAG_HIDDEN);
+      ui::set_text(s.box, ui::icon(ICON_CHECK));
     } else {
       lv_obj_set_style_bg_opa(s.box, LV_OPA_TRANSP, 0);
       lv_obj_set_style_border_width(s.box, std::max(1, ui::px(2)), 0);
-      lv_obj_set_style_border_color(s.box, ui::color(theme::MUTED), 0);
-      lv_obj_add_flag(s.check, LV_OBJ_FLAG_HIDDEN);
+      ui::set_text(s.box, "");
     }
+    // Colours of a look: again after on_theme.
+    lv_obj_set_style_border_color(s.box, ui::color(theme::MUTED), 0);
+    for (auto *o : {s.title, s.sub}) lv_obj_set_style_border_color(o, ui::color(theme::LINE), 0);
     s.done = done;
   }
   ui::set_fill(s.box, Tone::ACCENT, theme::ACCENT);
-  ui::set_color(s.check, theme::ON_ACCENT);
+  ui::set_color(s.box, theme::ON_ACCENT);
   ui::set_text(s.title, t.text);
   ui::set_color(s.title, t.completed ? theme::MUTED : theme::INK);
   Tone tone;
   const std::string sub = sub_text(t, tone);
   ui::set_text(s.sub, sub);
   ui::set_tone(s.sub, tone, theme::MUTED);
-  ui::set_fill(s.line, Tone::NORMAL, theme::LINE);
 }
 
-int TaskRows::show(const Tasks &tasks, int first, int height) {
+// Let `label` (at `y`, one line of `font`) reach down to `bottom` and draw the line between rows there, or neither.
+static void rule(lv_obj_t *label, int y, Font font, int bottom, bool on) {
+  const int line = ui::line_height(font), h = on ? std::max(line, bottom - y) : line;
+  lv_obj_set_height(label, h);
+  lv_obj_set_style_pad_bottom(label, h - line, 0);
+  lv_obj_set_style_border_width(label, on ? std::max(1, ui::px(1)) : 0, 0);
+}
+
+int TaskRows::show(const Tasks &tasks, int first, int height, bool more) {
   const int n = fit(tasks, first, height);
   const int d = box_size(), x = text_x(), lt = ui::line_height(title_font_);
+  // Every row in use and more to come (a tall tile): spread the rows over the room instead of a gap under them.
+  int extra = 0;
+  if (n > 0 && n == count_ && (more || first + n < static_cast<int>(tasks.size()))) {
+    int used = 0;
+    for (int i = 0; i < n; ++i) used += height_of(tasks[first + i]);
+    extra = std::max(0, (height - used) / n);
+  }
   int y = 0;
   for (int i = 0; i < count_; ++i) {
     Slot &s = slots_[i];
     if (i >= n) {
       s.task = -1;
-      for (auto *o : {s.line, s.box, s.title, s.sub}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+      for (auto *o : {s.box, s.title, s.sub}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
       continue;
     }
     const TaskItem &t = tasks[first + i];
-    const int h = height_of(t);
+    const int h = height_of(t) + extra;
     const bool two = two_lines(t);
     const int content = lt + (two ? sub_line() : 0);
     const int top = y + (h - content) / 2;
@@ -247,15 +268,15 @@ int TaskRows::show(const Tasks &tasks, int first, int height) {
     lv_obj_set_pos(s.box, 0, top + (lt - d) / 2);
     lv_obj_set_pos(s.title, x, top);
     lv_obj_set_pos(s.sub, x, top + lt);
-    lv_obj_set_pos(s.line, x, y + h - std::max(1, ui::px(1)));
+    // A line between rows, not under the last: the lowest label of the row reaches down and draws it.
+    const bool line = i + 1 < n;
+    rule(s.title, top, title_font_, y + h, line && !two);
+    rule(s.sub, top + lt, Font::BODY, y + h, line && two);
     paint(s, t, false);
     lv_obj_remove_flag(s.box, LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(s.title, LV_OBJ_FLAG_HIDDEN);
     if (two) lv_obj_remove_flag(s.sub, LV_OBJ_FLAG_HIDDEN);
     else lv_obj_add_flag(s.sub, LV_OBJ_FLAG_HIDDEN);
-    // A line between rows, not under the last.
-    if (i + 1 < n) lv_obj_remove_flag(s.line, LV_OBJ_FLAG_HIDDEN);
-    else lv_obj_add_flag(s.line, LV_OBJ_FLAG_HIDDEN);
     y += h;
   }
   return n;
@@ -279,7 +300,7 @@ void TaskRows::on_theme(const Tasks &tasks) {
 void TaskRows::hide() {
   for (int i = 0; i < count_; ++i) {
     slots_[i].task = -1;
-    for (auto *o : {slots_[i].line, slots_[i].box, slots_[i].title, slots_[i].sub}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+    for (auto *o : {slots_[i].box, slots_[i].title, slots_[i].sub}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
   }
 }
 
@@ -333,7 +354,7 @@ void TaskTile::on_state(JsonObjectConst data) {
 
 void TaskTile::answer(JsonObjectConst message) {
   asked_ = 0;
-  failed_ = !read_items(message, entity_, show_completed_, tasks_);
+  failed_ = !read_items(message, entity_, show_completed_, tasks_, TaskRows::TILE_SLOTS, &total_);
   if (failed_) ESP_LOGW(TAG, "todo.get_items for %s: %s", entity_.c_str(), message["error"] | "failed");
   loaded_ = loaded_ || !failed_;
   layout();
@@ -352,14 +373,14 @@ void TaskTile::layout() {
     return;
   }
   lv_obj_add_flag(note_, LV_OBJ_FLAG_HIDDEN);
-  const int total = static_cast<int>(tasks_.size());
+  const int total = std::max(total_, static_cast<int>(tasks_.size()));
   if (rows_.fit(tasks_, 0, height_) >= total) {
     rows_.show(tasks_, 0, height_);
     lv_obj_add_flag(more_, LV_OBJ_FLAG_HIDDEN);
     return;
   }
   // Not all fit: room at the bottom for "3 more", which opens the whole list.
-  const int shown = rows_.show(tasks_, 0, height_ - ui::line_height(Font::BODY));
+  const int shown = rows_.show(tasks_, 0, height_ - ui::line_height(Font::BODY), true);
   ui::set_text(more_, tessera::format(plugin_->text("more"), total - shown));
   lv_obj_remove_flag(more_, LV_OBJ_FLAG_HIDDEN);
 }
@@ -448,7 +469,7 @@ void ListCard::on_state(JsonObjectConst data) { ask(); }
 
 void ListCard::answer(JsonObjectConst message) {
   asked_ = 0;
-  failed_ = !read_items(message, entity_, true, tasks_);
+  failed_ = !read_items(message, entity_, true, tasks_, MAX_TASKS);
   loaded_ = loaded_ || !failed_;
   layout();
 }
