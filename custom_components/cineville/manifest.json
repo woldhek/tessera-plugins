@@ -1,0 +1,12 @@
+{
+  "domain": "cineville",
+  "name": "Cineville",
+  "codeowners": ["@woldhek"],
+  "config_flow": true,
+  "documentation": "https://github.com/woldhek/tessera-plugins/tree/main/custom_components/cineville",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/woldhek/tessera-plugins/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
