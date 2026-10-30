@@ -1,0 +1,63 @@
+# What tools/preview.py shows: the tile and its card with the two sensors of the Cineville integration as Home
+# Assistant has them (docs/PREVIEW.md). The films are what played in Amsterdam in the week of 30 October 2026;
+# {epoch+2h} is a moment two hours after the render, in seconds since 1970, as the integration writes next_start.
+tiles:
+  - tile: films
+    name: Cineville Amsterdam
+    entity: sensor.cineville_amsterdam_now_showing
+    options: { period: week, picks_only: false }
+  - tile: films
+    name: Today
+    entity: sensor.cineville_amsterdam_now_showing
+    options: { period: today, picks_only: false }
+    sizes: [2x2, 1x1]
+  - tile: films
+    name: Picks
+    entity: sensor.cineville_amsterdam_now_showing
+    options: { period: week, picks_only: true }
+    sizes: [2x2]
+  - tile: films
+    name: Coming soon
+    entity: sensor.cineville_amsterdam_coming_soon
+    sizes: [2x2, 3x2]
+  - tile: films
+    name: No sensor yet
+    sizes: [2x1]
+
+states:
+  sensor.cineville_amsterdam_now_showing:
+    state: "271"
+    attributes:
+      friendly_name: Cineville Amsterdam Now showing
+      cineville_list: now
+      titles: [All of a Sudden, Naza, Wicker, Yellow Letters, Primetime, Sense and Sensibility, Andiamo a bere l'ultima,
+               Digger, Coward, The Beloved, The Cycle of Love, Youri, Klara and the Sun, Erupcja, Akira (re-release),
+               Wild Horse Nine]
+      highlights: [week, week, week, week, tip, tip, tip, tip, "", "", "", "", "", "", "", ""]
+      directors: [Ryusuke Hamaguchi, "Yuval Abraham, Rachel Szor", "Alex Huston Fischer, Eleanor Wilson",
+                  İlker Çatak, Lance Oppenheim, Georgia Oakley, Francesco Sossai, Alejandro González Iñárritu,
+                  Lukas Dhont, Rodrigo Sorogoyen, Orlando von Einsiedel, Sander Burger, Taika Waititi, Pete Ohs,
+                  Katsuhiro Ôtomo, Martin McDonagh]
+      shows: [44, 103, 63, 27, 102, 77, 55, 41, 115, 78, 57, 37, 33, 27, 6, 12]
+      shows_today: [7, 15, 9, 4, 16, 11, 8, 6, 17, 12, 8, 5, 5, 4, 0, 0]
+      next_start: ["{epoch+35m}", "{epoch+1h}", "{epoch+3h}", "{epoch+26h}", "{epoch+50m}", "{epoch+2h}",
+                   "{epoch+4h}", "{epoch+27h}", "{epoch+20m}", "{epoch+90m}", "{epoch+5h}", "{epoch+28h}",
+                   "{epoch+3h}", "{epoch+50h}", "{epoch+74h}", "{epoch+98h}"]
+      next_venue: [Kriterion, Eye, LAB111, Filmhallen, Cinecenter, Rialto De Pijp, De Uitkijk, The Movies,
+                   Het Ketelhuis, Studio/K, De Balie, Cinecenter, Filmhallen, LAB111, Eye, Kriterion]
+  sensor.cineville_amsterdam_coming_soon:
+    state: "21"
+    attributes:
+      friendly_name: Cineville Amsterdam Coming soon
+      cineville_list: soon
+      titles: [Amarga navidad, Wild Horse Nine, I Love Boosters, Vier minus drei, Carnaval, The Devils (re-release),
+               Salvation, Hope, Donnie Darko (re-release), Spinoza]
+      highlights: [tip, "", "", "", "", "", "", "", "", ""]
+      directors: [Pedro Almodóvar, Martin McDonagh, Boots Riley, Adrian Goiginger, "", Ken Russell, Emin Alper, "",
+                  Richard Kelly, ""]
+      shows: [4, 12, 3, 0, 0, 0, 3, 0, 0, 0]
+      premieres: ["{epoch+6d}", "{epoch+6d}", "{epoch+6d}", "{epoch+6d}", "{epoch+12d}", "{epoch+13d}",
+                  "{epoch+13d}", "{epoch+13d}", "{epoch+20d}", "{epoch+20d}"]
+
+cards:
+  - { card: films, entity: sensor.cineville_amsterdam_now_showing }

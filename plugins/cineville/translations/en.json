@@ -1,0 +1,32 @@
+{
+  "_meta": { "name": "English" },
+  "screen": {
+    "choose_sensor": "Choose a Cineville sensor for this tile",
+    "wrong_sensor": "Not a sensor of the Cineville integration",
+    "loading": "Loading…",
+    "unavailable": "Cineville cannot be reached right now",
+    "none": "No more showtimes",
+    "none_today": "Nothing more today",
+    "none_soon": "Nothing announced yet",
+    "no_picks": "No film of the week or tips",
+    "pick_week": "Film of the week",
+    "pick_tip": "Cineville tip",
+    "opens": "Opens {date}",
+    "previews": "1 preview | {n} previews",
+    "more": "{n} more",
+    "page": "{page} / {pages}"
+  },
+  "app": {
+    "name": "Cineville",
+    "summary": "What plays in the Cineville theaters of your city, and what comes soon, with Cineville's own picks.",
+    "tile_name": "Films",
+    "tile_example": "Coward · Film of the week · 19:15 Kriterion",
+    "period": "Showtimes",
+    "period_hint": "Today shows only the films that still play today.",
+    "period_week": "The coming days",
+    "period_today": "Today",
+    "picks_only": "Only Cineville's picks",
+    "picks_only_hint": "The film of the week and the tips of Cineville's editors.",
+    "card_name": "All films"
+  }
+}

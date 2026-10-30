@@ -1,0 +1,32 @@
+{
+  "_meta": { "name": "Nederlands" },
+  "screen": {
+    "choose_sensor": "Kies een Cineville-sensor voor deze tegel",
+    "wrong_sensor": "Geen sensor van de Cineville-integratie",
+    "loading": "Laden…",
+    "unavailable": "Cineville is nu niet bereikbaar",
+    "none": "Geen voorstellingen meer",
+    "none_today": "Vandaag niets meer",
+    "none_soon": "Nog niets aangekondigd",
+    "no_picks": "Geen film van de week of tips",
+    "pick_week": "Film van de week",
+    "pick_tip": "Cineville-tip",
+    "opens": "Vanaf {date}",
+    "previews": "1 voorpremière | {n} voorpremières",
+    "more": "nog {n}",
+    "page": "{page} / {pages}"
+  },
+  "app": {
+    "name": "Cineville",
+    "summary": "Wat er draait in de Cineville-filmtheaters van je stad, en wat eraan komt, met de tips van Cineville.",
+    "tile_name": "Films",
+    "tile_example": "Coward · Film van de week · 19:15 Kriterion",
+    "period": "Voorstellingen",
+    "period_hint": "Vandaag toont alleen de films die vandaag nog draaien.",
+    "period_week": "De komende dagen",
+    "period_today": "Vandaag",
+    "picks_only": "Alleen aanraders van Cineville",
+    "picks_only_hint": "De film van de week en de tips van de Cineville-redactie.",
+    "card_name": "Alle films"
+  }
+}

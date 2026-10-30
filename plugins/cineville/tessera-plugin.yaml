@@ -1,0 +1,43 @@
+# The manifest: who made the plugin, what it may do, and what the Tessera app shows. It holds no code and no words:
+# every name, label and hint below is a key into translations/<language>.json, part "app".
+# Every field is explained in docs/MANIFEST.md.
+#
+# Cineville: what plays in the Cineville theaters of a city, and what comes soon. The data comes from the Cineville
+# integration for Home Assistant (custom_components/cineville in this repository, through HACS): a sensor per list,
+# whose attributes hold the films as short parallel lists. The tile belongs to that sensor; the screen reaches nothing
+# on the internet and needs no key.
+id: cineville
+version: 0.1.0
+# 0.10: tap_point() on the card's foot.
+api: "0.10"
+icon: movie-open
+maintainer: woldhek
+license: MIT
+stage: beta
+topics: [media, fun]
+requires:
+  esphome: 2026.6.2
+boards: any
+flash_kb: 8
+
+tiles:
+  - id: films
+    name: tile_name
+    icon: movie-open
+    sizes: { min: 1x1, max: 4x4 }
+    # Eight rows at most, three parts a row (the bar, the title, the second line: about 280 bytes), a note and "5 more".
+    # The films themselves are a list in PSRAM.
+    memory: 2600
+    domains: [sensor]
+    # Only the sensors of the Cineville integration: "Now showing" and "Coming soon" of each city set up.
+    has_attributes: [cineville_list]
+    attributes: [cineville_list, titles, highlights, directors, shows, shows_today, next_start, next_venue, premieres]
+    example: tile_example
+    preview: { title: "{name}" }
+    options:
+      - { id: period, kind: choice, label: period, hint: period_hint, default: week,
+          choices: [{ value: week, label: period_week }, { value: today, label: period_today }] }
+      - { id: picks_only, kind: toggle, label: picks_only, hint: picks_only_hint, default: false }
+
+cards:
+  - { id: films, name: card_name }

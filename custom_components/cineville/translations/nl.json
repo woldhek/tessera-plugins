@@ -1,0 +1,59 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cineville",
+        "description": "Kies de stad waarvan je de Cineville-filmtheaters wilt volgen.",
+        "data": { "city": "Stad" }
+      },
+      "theaters": {
+        "title": "Filmtheaters in {city}",
+        "description": "{city} heeft {count} Cineville-filmtheaters. Kies er een paar, of geen voor allemaal.",
+        "data": {
+          "venues": "Filmtheaters",
+          "days": "Dagen vooruit",
+          "sort": "Volgorde",
+          "soon_weeks": "Verwacht: weken vooruit",
+          "language": "Taal van de beschrijvingen"
+        }
+      }
+    },
+    "error": { "cannot_connect": "Cineville is niet bereikbaar. Probeer het later nog eens." },
+    "abort": { "already_configured": "Deze stad met deze filmtheaters is al ingesteld." }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Filmtheaters in {city}",
+        "description": "Kies een paar filmtheaters, of geen voor allemaal.",
+        "data": {
+          "venues": "Filmtheaters",
+          "days": "Dagen vooruit",
+          "sort": "Volgorde",
+          "soon_weeks": "Verwacht: weken vooruit",
+          "language": "Taal van de beschrijvingen"
+        }
+      }
+    },
+    "abort": { "cannot_connect": "Cineville is niet bereikbaar. Probeer het later nog eens." }
+  },
+  "selector": {
+    "sort": {
+      "options": {
+        "recommended": "Aanraders eerst (film van de week, tips)",
+        "shows": "Meeste voorstellingen eerst",
+        "next": "Eerstvolgende voorstelling eerst",
+        "title": "Op titel"
+      }
+    },
+    "language": {
+      "options": { "auto": "Taal van Home Assistant", "nl": "Nederlands", "en": "Engels" }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "now_showing": { "name": "Nu te zien" },
+      "coming_soon": { "name": "Verwacht" }
+    }
+  }
+}
