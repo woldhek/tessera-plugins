@@ -1,6 +1,6 @@
 {
  "format": 1,
- "generated": "2026-10-30T08:04:35Z",
+ "generated": "2026-10-30T08:08:07Z",
  "plugin_api": "0.24",
  "blocked": [],
  "featured": [
@@ -22,6 +22,11 @@
    "repo": "https://github.com/maxgramser/tessera-plugins",
    "repo_id": 1408945265,
    "path": "plugins/cineville"
+  },
+  "cineville_trailer": {
+   "repo": "https://github.com/maxgramser/tessera-plugins",
+   "repo_id": 1408945265,
+   "path": "plugins/cineville_trailer"
   },
   "custom_card": {
    "repo": "https://github.com/stofle/tessera-plugin-custom-card",
@@ -1116,6 +1121,103 @@
    },
    "changelog": {
     "en": "# Changelog\n\n## 0.2.0\n- Tap a film on the card for its own page: the director, year and length, a short blurb of what it is about, and its\n  next showtimes.\n- Two keys there: **Seen** puts the film on your seen list, so it leaves the lists; **Trailer** plays its trailer on\n  the media player chosen in the Cineville integration's options.\n- Needs the Cineville integration 0.2.0 or later (with an older one the page shows only the title and next showtime),\n  and the screen allowed to perform Home Assistant actions (its device page in Home Assistant, \"Configure\").\n\n## 0.1.0\n- First version: the films of the Cineville theaters of your city on a tile, with when and where each shows next and\n  Cineville's film of the week and tips. Tap for the whole list on a card.\n- Needs the Cineville integration for Home Assistant (through HACS, see the README).\n"
+   }
+  },
+  {
+   "id": "cineville_trailer",
+   "repo": "https://github.com/maxgramser/tessera-plugins",
+   "repo_id": 1408945265,
+   "path": "plugins/cineville_trailer",
+   "label": "tessera",
+   "status": "ok",
+   "release": {
+    "version": "0.1.0",
+    "sha": "53d2020df3b6f1d3fdcc90b79531ed447b94245d",
+    "date": "2026-10-30"
+   },
+   "manifest": {
+    "id": "cineville_trailer",
+    "version": "0.1.0",
+    "api": "0.17",
+    "icon": "movie-open",
+    "maintainer": "woldhek",
+    "license": "MIT",
+    "stage": "beta",
+    "topics": [
+     "media",
+     "fun"
+    ],
+    "requires": {
+     "esphome": "2026.6.2"
+    },
+    "boards": "any",
+    "flash_kb": 4,
+    "tiles": [
+     {
+      "id": "trailer",
+      "name": "tile_name",
+      "icon": "movie-open",
+      "sizes": {
+       "min": "2x1",
+       "max": "4x4"
+      },
+      "memory": 400,
+      "pictures": 1,
+      "domains": [
+       "camera"
+      ],
+      "has_attributes": [
+       "cineville_trailer"
+      ],
+      "attributes": [
+       "film_title"
+      ],
+      "example": "tile_example",
+      "preview": {
+       "title": "{film_title}"
+      }
+     }
+    ]
+   },
+   "translations": {
+    "en": {
+     "_meta": {
+      "name": "English"
+     },
+     "screen": {
+      "choose_camera": "Choose the Cineville trailer camera",
+      "wrong_camera": "Not the Cineville trailer camera",
+      "no_film": "Choose a trailer on the Cineville card"
+     },
+     "app": {
+      "name": "Cineville trailer (experimental)",
+      "summary": "The trailer you chose on the Cineville card, live with its sound, on a screen that streams.",
+      "tile_name": "Trailer",
+      "tile_example": "All of a Sudden"
+     }
+    },
+    "nl": {
+     "_meta": {
+      "name": "Nederlands"
+     },
+     "screen": {
+      "choose_camera": "Kies de Cineville-trailercamera",
+      "wrong_camera": "Niet de Cineville-trailercamera",
+      "no_film": "Kies een trailer op de Cineville-kaart"
+     },
+     "app": {
+      "name": "Cineville-trailer (experimenteel)",
+      "summary": "De trailer die je op de Cineville-kaart koos, live met geluid, op een scherm dat kan streamen.",
+      "tile_name": "Trailer",
+      "tile_example": "All of a Sudden"
+     }
+    }
+   },
+   "readme": {
+    "en": "# Cineville trailer (experimental)\n\n> Experimental, and only on Tessera's dev firmware: it needs the Cineville integration's trailer camera (branch\n> `experimental-trailer`, pre-release 0.3.0b1) and a screen that streams (the ESP32-P4 boards).\n\nThe trailer you chose on the Cineville card (its **Trailer** key) or in Home Assistant, live on a tile, with its sound\non a screen that has a speaker. Before and after it plays, the tile shows the film's poster.\n\nA Tessera screen cannot play an MP4 itself; it shows a camera live. So the Cineville integration offers the trailer as\na camera, which Home Assistant plays through its go2rtc and the Tessera app sends on to the screen. Whether that plays\nwell is what this plugin tries out.\n\n## Set up\n\n1. In HACS, install the Cineville integration's pre-release 0.3.0b1 (turn on **Show beta versions** for it, or\n   **Redownload** and pick the version), and restart Home Assistant.\n2. In the Cineville integration's options, turn on **Trailer camera (experimental)**. Each city gets a camera\n   **Trailer** and a select **Trailer film**.\n3. Add this plugin to a screen with Tessera's dev firmware in the Tessera app.\n4. In Layout, place the **Trailer** tile and choose the Cineville trailer camera as its entity.\n5. Build and install the screen. Choose a film with **Trailer** on the Cineville card, or with **Trailer film**.\n\n## Roll back\n\nRemove the plugin from the screen, and turn the option **Trailer camera (experimental)** off (the camera and the\nselect go with it), or reinstall the integration's release 0.2.0 in HACS.\n\n## Privacy\n\nThe screen talks only to Home Assistant. Home Assistant fetches the trailer and the poster from Cineville's picture\nservice (culturekit-assets.imgix.net), as the Cineville website does.\n"
+   },
+   "changelog": {
+    "en": "# Changelog\n\n## 0.1.0\n- First, experimental version: the Cineville integration's trailer camera live on a tile, with the film's title under\n  it. Needs Tessera's dev firmware and the integration's pre-release 0.3.0b1.\n"
    }
   },
   {
