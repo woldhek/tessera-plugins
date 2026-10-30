@@ -3,7 +3,7 @@
 # Every field is explained in docs/MANIFEST.md.
 #
 # Cineville: what plays in the Cineville theaters of a city, and what comes soon. The data comes from the Cineville
-# integration for Home Assistant (custom_components/cineville in this repository, through HACS): a sensor per list,
+# integration for Home Assistant (github.com/woldhek/ha-cineville, through HACS): a sensor per list,
 # whose attributes hold the films as short parallel lists. The tile belongs to that sensor; the screen reaches nothing
 # on the internet and needs no key.
 id: cineville
