@@ -1,6 +1,6 @@
 {
  "format": 1,
- "generated": "2026-10-29T21:29:20Z",
+ "generated": "2026-10-30T05:29:46Z",
  "plugin_api": "0.24",
  "blocked": [],
  "featured": [
@@ -17,6 +17,11 @@
    "repo": "https://github.com/maxgramser/tessera-plugins",
    "repo_id": 1408945265,
    "path": "plugins/cinema"
+  },
+  "cineville": {
+   "repo": "https://github.com/maxgramser/tessera-plugins",
+   "repo_id": 1408945265,
+   "path": "plugins/cineville"
   },
   "custom_card": {
    "repo": "https://github.com/stofle/tessera-plugin-custom-card",
@@ -920,6 +925,178 @@
     "en": "# Changelog\n\n## 0.2.0\n- The posters' places have no block of their own while a poster comes (plugin API 0.17), so no long grey bars stand in\n  the flow when the screen lets a page's pictures go and fetches them again. Needs a screen with plugin API 0.17.\n\n## 0.1.0\n- First version: the films in a country's cinemas, coming soon or popular, from TMDB, as a cover flow of posters that\n  moves on by itself, with the rating on the poster and the genres under the title. Filters for one genre and a\n  lowest rating. Needs a free TMDB API key and a screen with plugin API 0.10. A board without pictures shows the\n  titles as a list.\n"
    },
    "image": "store.png"
+  },
+  {
+   "id": "cineville",
+   "repo": "https://github.com/maxgramser/tessera-plugins",
+   "repo_id": 1408945265,
+   "path": "plugins/cineville",
+   "label": "tessera",
+   "status": "ok",
+   "release": {
+    "version": "0.1.0",
+    "sha": "1d18c5a5b5c2eecc6e99647d433b061520cd7190",
+    "date": "2026-10-30"
+   },
+   "manifest": {
+    "id": "cineville",
+    "version": "0.1.0",
+    "api": "0.10",
+    "icon": "movie-open",
+    "maintainer": "woldhek",
+    "license": "MIT",
+    "stage": "beta",
+    "topics": [
+     "media",
+     "fun"
+    ],
+    "requires": {
+     "esphome": "2026.6.2"
+    },
+    "boards": "any",
+    "flash_kb": 8,
+    "tiles": [
+     {
+      "id": "films",
+      "name": "tile_name",
+      "icon": "movie-open",
+      "sizes": {
+       "min": "1x1",
+       "max": "4x4"
+      },
+      "memory": 2600,
+      "domains": [
+       "sensor"
+      ],
+      "has_attributes": [
+       "cineville_list"
+      ],
+      "attributes": [
+       "cineville_list",
+       "titles",
+       "highlights",
+       "directors",
+       "shows",
+       "shows_today",
+       "next_start",
+       "next_venue",
+       "premieres"
+      ],
+      "example": "tile_example",
+      "preview": {
+       "title": "{name}"
+      },
+      "options": [
+       {
+        "id": "period",
+        "kind": "choice",
+        "label": "period",
+        "hint": "period_hint",
+        "default": "week",
+        "choices": [
+         {
+          "value": "week",
+          "label": "period_week"
+         },
+         {
+          "value": "today",
+          "label": "period_today"
+         }
+        ]
+       },
+       {
+        "id": "picks_only",
+        "kind": "toggle",
+        "label": "picks_only",
+        "hint": "picks_only_hint",
+        "default": false
+       }
+      ]
+     }
+    ],
+    "cards": [
+     {
+      "id": "films",
+      "name": "card_name"
+     }
+    ]
+   },
+   "translations": {
+    "en": {
+     "_meta": {
+      "name": "English"
+     },
+     "screen": {
+      "choose_sensor": "Choose a Cineville sensor for this tile",
+      "wrong_sensor": "Not a sensor of the Cineville integration",
+      "loading": "Loading…",
+      "unavailable": "Cineville cannot be reached right now",
+      "none": "No more showtimes",
+      "none_today": "Nothing more today",
+      "none_soon": "Nothing announced yet",
+      "no_picks": "No film of the week or tips",
+      "pick_week": "Film of the week",
+      "pick_tip": "Cineville tip",
+      "opens": "Opens {date}",
+      "previews": "1 preview | {n} previews",
+      "more": "{n} more",
+      "page": "{page} / {pages}"
+     },
+     "app": {
+      "name": "Cineville",
+      "summary": "What plays in the Cineville theaters of your city, and what comes soon, with Cineville's own picks.",
+      "tile_name": "Films",
+      "tile_example": "Coward · Film of the week · 19:15 Kriterion",
+      "period": "Showtimes",
+      "period_hint": "Today shows only the films that still play today.",
+      "period_week": "The coming days",
+      "period_today": "Today",
+      "picks_only": "Only Cineville's picks",
+      "picks_only_hint": "The film of the week and the tips of Cineville's editors.",
+      "card_name": "All films"
+     }
+    },
+    "nl": {
+     "_meta": {
+      "name": "Nederlands"
+     },
+     "screen": {
+      "choose_sensor": "Kies een Cineville-sensor voor deze tegel",
+      "wrong_sensor": "Geen sensor van de Cineville-integratie",
+      "loading": "Laden…",
+      "unavailable": "Cineville is nu niet bereikbaar",
+      "none": "Geen voorstellingen meer",
+      "none_today": "Vandaag niets meer",
+      "none_soon": "Nog niets aangekondigd",
+      "no_picks": "Geen film van de week of tips",
+      "pick_week": "Film van de week",
+      "pick_tip": "Cineville-tip",
+      "opens": "Vanaf {date}",
+      "previews": "1 voorpremière | {n} voorpremières",
+      "more": "nog {n}",
+      "page": "{page} / {pages}"
+     },
+     "app": {
+      "name": "Cineville",
+      "summary": "Wat er draait in de Cineville-filmtheaters van je stad, en wat eraan komt, met de tips van Cineville.",
+      "tile_name": "Films",
+      "tile_example": "Coward · Film van de week · 19:15 Kriterion",
+      "period": "Voorstellingen",
+      "period_hint": "Vandaag toont alleen de films die vandaag nog draaien.",
+      "period_week": "De komende dagen",
+      "period_today": "Vandaag",
+      "picks_only": "Alleen aanraders van Cineville",
+      "picks_only_hint": "De film van de week en de tips van de Cineville-redactie.",
+      "card_name": "Alle films"
+     }
+    }
+   },
+   "readme": {
+    "en": "# Cineville\n\n> Needs the Cineville integration in Home Assistant first (through HACS, below). The screen shows the integration's\n> sensors; it reaches nothing on the internet itself.\n\nWhat plays in the Cineville theaters of your city, and what comes soon: the art house cinemas of the Cineville pass in\nthe Netherlands, as on cineville.nl.\n\n- Every film is a row: its title and, when there is room, when and where it shows next (\"19:15 Kriterion\",\n  \"Tomorrow 21:00 Eye\").\n- Cineville's own picks stand out: the **film of the week** and the **tips** of its editors have a coloured bar and\n  say so.\n- **Today** shows only the films that still play today; a film drops off once its last showtime has begun.\n- The **Coming soon** sensor shows the films that open in the coming weeks, with the day they open and how many\n  previews your theaters have.\n- Tap the tile to see the whole list on a card (on a screen of 4 inches and up with each film's director), and page\n  through it with the arrows.\n\n## Set up\n\n1. In Home Assistant, open HACS, choose **Custom repositories** in the menu at the top right, add\n   `https://github.com/woldhek/tessera-plugins` as type **Integration**, then find **Cineville** in HACS and download it.\n   Restart Home Assistant.\n2. In Home Assistant, go to **Settings → Devices & services → Add integration**, choose **Cineville**, pick your city\n   and, if you like, only some of its theaters. This makes two sensors: **Now showing** and **Coming soon**.\n3. Add this plugin to a screen in the Tessera app.\n4. In Layout, place the **Films** tile from the plugin library.\n5. In the inspector, choose one of the two Cineville sensors as the tile's entity, and optionally **Today** or **Only\n   Cineville's picks**.\n6. Build and install the screen.\n\n## The integration\n\nThe integration asks Cineville every hour for the showtimes of the chosen days (seven by default) in the chosen\ntheaters. In its options you change the theaters, the number of days, the order (Cineville's picks first, most\nshowtimes first, soonest showtime first, or by title), how many weeks \"Coming soon\" looks ahead, and the language of the\ndescriptions. Each sensor's state is its number of films; its attributes hold up to 16 films for the screen and up to\n60 in `films`, with the director, year, showtimes, theaters, poster and a link to the film on cineville.nl, for a\ndashboard or an automation.\n\n## Privacy\n\nThe screen talks only to Home Assistant. The Cineville integration asks api.cineville.nl, the same public service the\nCineville website reads, which theaters show which films; it sends no account, no key and nothing about you.\n"
+   },
+   "changelog": {
+    "en": "# Changelog\n\n## 0.1.0\n- First version: the films of the Cineville theaters of your city on a tile, with when and where each shows next and\n  Cineville's film of the week and tips. Tap for the whole list on a card.\n- Needs the Cineville integration for Home Assistant (through HACS, see the README).\n"
+   }
   },
   {
    "id": "flip_clock",
