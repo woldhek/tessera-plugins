@@ -1,6 +1,6 @@
 {
  "format": 1,
- "generated": "2026-10-30T05:56:18Z",
+ "generated": "2026-10-30T08:04:35Z",
  "plugin_api": "0.24",
  "blocked": [],
  "featured": [
@@ -934,14 +934,14 @@
    "label": "tessera",
    "status": "ok",
    "release": {
-    "version": "0.1.0",
-    "sha": "c7897ed74b0f0c574a04e6a30867b5744d15fd61",
+    "version": "0.2.0",
+    "sha": "da097a39bbec7a9826d271f2bebae372a1ad46d7",
     "date": "2026-10-30"
    },
    "manifest": {
     "id": "cineville",
-    "version": "0.1.0",
-    "api": "0.10",
+    "version": "0.2.0",
+    "api": "0.12",
     "icon": "movie-open",
     "maintainer": "woldhek",
     "license": "MIT",
@@ -973,6 +973,7 @@
       ],
       "attributes": [
        "cineville_list",
+       "ids",
        "titles",
        "highlights",
        "directors",
@@ -1019,7 +1020,16 @@
       "id": "films",
       "name": "card_name"
      }
-    ]
+    ],
+    "permissions": {
+     "ha_commands": [
+      "call_service:cineville.get_film"
+     ],
+     "home_assistant_actions": [
+      "cineville.mark_seen",
+      "cineville.play_trailer"
+     ]
+    }
    },
    "translations": {
     "en": {
@@ -1040,7 +1050,12 @@
       "opens": "Opens {date}",
       "previews": "1 preview | {n} previews",
       "more": "{n} more",
-      "page": "{page} / {pages}"
+      "page": "{page} / {pages}",
+      "minutes": "{n} min",
+      "no_detail": "Could not load this film",
+      "seen": "Seen",
+      "trailer": "Trailer",
+      "trailer_on": "Trailer starts on {player}"
      },
      "app": {
       "name": "Cineville",
@@ -1074,7 +1089,12 @@
       "opens": "Vanaf {date}",
       "previews": "1 voorpremière | {n} voorpremières",
       "more": "nog {n}",
-      "page": "{page} / {pages}"
+      "page": "{page} / {pages}",
+      "minutes": "{n} min",
+      "no_detail": "Kan deze film niet laden",
+      "seen": "Gezien",
+      "trailer": "Trailer",
+      "trailer_on": "Trailer start op {player}"
      },
      "app": {
       "name": "Cineville",
@@ -1092,10 +1112,10 @@
     }
    },
    "readme": {
-    "en": "# Cineville\n\n> Needs the Cineville integration in Home Assistant first (through HACS, below). The screen shows the integration's\n> sensors; it reaches nothing on the internet itself.\n\nWhat plays in the Cineville theaters of your city, and what comes soon: the art house cinemas of the Cineville pass in\nthe Netherlands, as on cineville.nl.\n\n- Every film is a row: its title and, when there is room, when and where it shows next (\"19:15 Kriterion\",\n  \"Tomorrow 21:00 Eye\").\n- Cineville's own picks stand out: the **film of the week** and the **tips** of its editors have a coloured bar and\n  say so.\n- **Today** shows only the films that still play today; a film drops off once its last showtime has begun.\n- The **Coming soon** sensor shows the films that open in the coming weeks, with the day they open and how many\n  previews your theaters have.\n- Tap the tile to see the whole list on a card (on a screen of 4 inches and up with each film's director), and page\n  through it with the arrows.\n\n## Set up\n\n1. In Home Assistant, open HACS, choose **Custom repositories** in the menu at the top right, add\n   `https://github.com/woldhek/ha-cineville` as type **Integration**, then find **Cineville** in HACS and download it.\n   Restart Home Assistant.\n2. In Home Assistant, go to **Settings → Devices & services → Add integration**, choose **Cineville**, pick your city\n   and, if you like, only some of its theaters. This makes two sensors: **Now showing** and **Coming soon**.\n3. Add this plugin to a screen in the Tessera app.\n4. In Layout, place the **Films** tile from the plugin library.\n5. In the inspector, choose one of the two Cineville sensors as the tile's entity, and optionally **Today** or **Only\n   Cineville's picks**.\n6. Build and install the screen.\n\n## The integration\n\nThe integration lives in its own repository, [woldhek/ha-cineville](https://github.com/woldhek/ha-cineville). The integration asks Cineville every hour for the showtimes of the chosen days (seven by default) in the chosen\ntheaters. In its options you change the theaters, the number of days, the order (Cineville's picks first, most\nshowtimes first, soonest showtime first, or by title), how many weeks \"Coming soon\" looks ahead, and the language of the\ndescriptions. Each sensor's state is its number of films; its attributes hold up to 16 films for the screen and up to\n60 in `films`, with the director, year, showtimes, theaters, poster and a link to the film on cineville.nl, for a\ndashboard or an automation.\n\n## Privacy\n\nThe screen talks only to Home Assistant. The Cineville integration asks api.cineville.nl, the same public service the\nCineville website reads, which theaters show which films; it sends no account, no key and nothing about you.\n"
+    "en": "# Cineville\n\n> Needs the Cineville integration in Home Assistant first (through HACS, below). The screen shows the integration's\n> sensors; it reaches nothing on the internet itself.\n\nWhat plays in the Cineville theaters of your city, and what comes soon: the art house cinemas of the Cineville pass in\nthe Netherlands, as on cineville.nl.\n\n- Every film is a row: its title and, when there is room, when and where it shows next (\"19:15 Kriterion\",\n  \"Tomorrow 21:00 Eye\").\n- Cineville's own picks stand out: the **film of the week** and the **tips** of its editors have a coloured bar and\n  say so.\n- **Today** shows only the films that still play today; a film drops off once its last showtime has begun.\n- The **Coming soon** sensor shows the films that open in the coming weeks, with the day they open and how many\n  previews your theaters have.\n- Tap the tile to see the whole list on a card (on a screen of 4 inches and up with each film's director), and page\n  through it with the arrows.\n- Tap a film on the card for its own page: the director, year and length, a short blurb, and the next showtimes. Its\n  **Seen** key puts the film on your seen list, so it leaves the lists; its **Trailer** key plays the trailer on the\n  media player chosen in the integration's options (shown only when one is chosen).\n\n## Set up\n\n1. In Home Assistant, open HACS, choose **Custom repositories** in the menu at the top right, add\n   `https://github.com/woldhek/ha-cineville` as type **Integration**, then find **Cineville** in HACS and download it.\n   Restart Home Assistant.\n2. In Home Assistant (the integration 0.2.0 or later), go to **Settings → Devices & services → Add integration**, choose **Cineville**, pick your city\n   and, if you like, only some of its theaters. This makes two sensors: **Now showing** and **Coming soon**.\n3. Add this plugin to a screen in the Tessera app.\n4. In Layout, place the **Films** tile from the plugin library.\n5. In the inspector, choose one of the two Cineville sensors as the tile's entity, and optionally **Today** or **Only\n   Cineville's picks**.\n6. For the **Seen** and **Trailer** keys: allow the screen to perform Home Assistant actions (in Home Assistant, the\n   screen's ESPHome device, **Configure**), and choose a media player in the Cineville integration's options.\n7. Build and install the screen.\n\n## The integration\n\nThe integration lives in its own repository, [woldhek/ha-cineville](https://github.com/woldhek/ha-cineville). The integration asks Cineville every hour for the showtimes of the chosen days (seven by default) in the chosen\ntheaters. In its options you change the theaters, the number of days, the order (Cineville's picks first, most\nshowtimes first, soonest showtime first, or by title), how many weeks \"Coming soon\" looks ahead, and the language of the\ndescriptions. Each sensor's state is its number of films; its attributes hold up to 16 films for the screen and up to\n60 in `films`, with the director, year, showtimes, theaters, poster and a link to the film on cineville.nl, for a\ndashboard or an automation.\n\n## Privacy\n\nThe screen talks only to Home Assistant. The Cineville integration asks api.cineville.nl, the same public service the\nCineville website reads, which theaters show which films; it sends no account, no key and nothing about you.\n"
    },
    "changelog": {
-    "en": "# Changelog\n\n## 0.1.0\n- First version: the films of the Cineville theaters of your city on a tile, with when and where each shows next and\n  Cineville's film of the week and tips. Tap for the whole list on a card.\n- Needs the Cineville integration for Home Assistant (through HACS, see the README).\n"
+    "en": "# Changelog\n\n## 0.2.0\n- Tap a film on the card for its own page: the director, year and length, a short blurb of what it is about, and its\n  next showtimes.\n- Two keys there: **Seen** puts the film on your seen list, so it leaves the lists; **Trailer** plays its trailer on\n  the media player chosen in the Cineville integration's options.\n- Needs the Cineville integration 0.2.0 or later (with an older one the page shows only the title and next showtime),\n  and the screen allowed to perform Home Assistant actions (its device page in Home Assistant, \"Configure\").\n\n## 0.1.0\n- First version: the films of the Cineville theaters of your city on a tile, with when and where each shows next and\n  Cineville's film of the week and tips. Tap for the whole list on a card.\n- Needs the Cineville integration for Home Assistant (through HACS, see the README).\n"
    }
   },
   {
