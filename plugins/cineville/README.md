@@ -19,7 +19,7 @@ the Netherlands, as on cineville.nl.
 ## Set up
 
 1. In Home Assistant, open HACS, choose **Custom repositories** in the menu at the top right, add
-   `https://github.com/woldhek/tessera-plugins` as type **Integration**, then find **Cineville** in HACS and download it.
+   `https://github.com/woldhek/ha-cineville` as type **Integration**, then find **Cineville** in HACS and download it.
    Restart Home Assistant.
 2. In Home Assistant, go to **Settings → Devices & services → Add integration**, choose **Cineville**, pick your city
    and, if you like, only some of its theaters. This makes two sensors: **Now showing** and **Coming soon**.
@@ -31,7 +31,7 @@ the Netherlands, as on cineville.nl.
 
 ## The integration
 
-The integration asks Cineville every hour for the showtimes of the chosen days (seven by default) in the chosen
+The integration lives in its own repository, [woldhek/ha-cineville](https://github.com/woldhek/ha-cineville). The integration asks Cineville every hour for the showtimes of the chosen days (seven by default) in the chosen
 theaters. In its options you change the theaters, the number of days, the order (Cineville's picks first, most
 showtimes first, soonest showtime first, or by title), how many weeks "Coming soon" looks ahead, and the language of the
 descriptions. Each sensor's state is its number of films; its attributes hold up to 16 films for the screen and up to

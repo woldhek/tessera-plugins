@@ -2,7 +2,7 @@
 
 ## Project Overview
 A Tessera plugin (`cineville`) that shows what plays in the Cineville theaters of a city, and what comes soon, from the
-Cineville integration for Home Assistant (`custom_components/cineville` at the root of this repository, installed
+Cineville integration for Home Assistant ([woldhek/ha-cineville](https://github.com/woldhek/ha-cineville), installed
 through HACS). The tile belongs to one of that integration's sensors; the screen fetches nothing itself and needs no key.
 
 - **Plugin ID:** `cineville`
@@ -29,12 +29,10 @@ plugins/cineville/
 ├── translations/              # en.json, nl.json
 ├── preview.yaml               # The two sensors, with the films of a real week in Amsterdam
 ├── README.md, CHANGELOG.md
-custom_components/cineville/   # The Home Assistant integration (HACS)
-tests/cineville/               # Tests of the integration's client and lists: python3 -m pytest tests/cineville
 ```
 
 ## Essential Commands
 - **Validate Plugin:** `python3 tools/check.py plugins/cineville`
 - **Preview UI:** `python3 tools/preview.py plugins/cineville --strict`
 - **Store Image:** `python3 tools/store_image.py plugins/cineville --from plugins/cineville/.preview`
-- **Integration tests:** `python3 -m pytest tests/cineville`
+- **Integration and its tests:** https://github.com/woldhek/ha-cineville
