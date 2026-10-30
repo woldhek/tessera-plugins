@@ -11,6 +11,7 @@ class Cineville;
 // soon" (when it opens). Fixed fields, so a whole list is one block (in PSRAM on a board that has it). The app cuts
 // every text to 48 bytes; a theater's name is cut shorter here, it is the last part of a line.
 struct Film {
+  char id[40]{};           // Cineville's id of the film, for the detail page and the actions
   char title[49]{};
   char director[49]{};
   char venue[25]{};
@@ -58,11 +59,13 @@ class FilmRows {
   int show(const FilmList &list, const tessera::List<uint8_t> &order, int first, int height, bool spread);
   void repaint(const FilmList &list, const tessera::List<uint8_t> &order);
   void hide();
+  // The index in the list of the film whose row is under `y`, -1 for none.
+  int film_at(int y) const;
 
  private:
   struct Slot {
     lv_obj_t *bar{}, *title{}, *sub{}, *info{};   // info: the director, on the card
-    int film{-1};
+    int film{-1}, y{0}, h{0};
   };
   std::string sub_text(const FilmList &list, const Film &f, bool pick) const;
   void paint(Slot &s, const FilmList &list, const Film &f);
@@ -96,17 +99,41 @@ class FilmTile : public tessera::Tile {
   int width_{0}, height_{0}, tile_{-1};
 };
 
+// One film on the card's detail page, as the action cineville.get_film answers (integration 0.2).
+struct Detail {
+  char id[40]{};
+  char title[49]{};
+  char meta[100]{};        // director · year · duration
+  char player[49]{};       // the media player a trailer plays on, "" for none
+  tessera::Text blurb;
+  uint32_t shows[4]{};     // the next showtimes, seconds since 1970
+  char venues[4][25]{};
+  uint32_t premiere{0};
+  uint8_t pick{0};
+  bool trailer{false}, loaded{false}, failed{false};
+};
+
 class FilmCard : public tessera::Card {
  public:
-  explicit FilmCard(Cineville *plugin) : plugin_(plugin) {}
+  explicit FilmCard(Cineville *plugin);
+  ~FilmCard() override;
   void open(const tessera::CardContext &c) override;
   void on_state(JsonObjectConst data) override;
   void on_tick(uint32_t epoch) override;
   void on_theme() override;
   void on_tap() override;
+  bool on_back() override;
+
+  void answer(JsonObjectConst message);
+  uint32_t asked() const { return asked_; }
 
  private:
   void layout();
+  void show_detail(int index);
+  void layout_detail();
+  void paint_detail();
+  void hide_detail();
+  void hide_list();
 
   Cineville *plugin_{nullptr};
   FilmRows rows_;
@@ -116,14 +143,22 @@ class FilmCard : public tessera::Card {
   tessera::Text entity_;
   lv_obj_t *note_{nullptr}, *prev_{nullptr}, *next_{nullptr}, *page_{nullptr}, *rule_{nullptr};
   int width_{0}, height_{0}, foot_{0}, per_page_{1}, page_index_{0};
+  // The detail page: a film's title, the facts, its pick, the blurb, the next showtimes, and two keys.
+  bool detail_open_{false};
+  Detail detail_;
+  lv_obj_t *d_title_{nullptr}, *d_meta_{nullptr}, *d_pick_{nullptr}, *d_blurb_{nullptr}, *d_shows_[4]{},
+      *d_note_{nullptr}, *k_seen_{nullptr}, *k_seen_text_{nullptr}, *k_play_{nullptr}, *k_play_text_{nullptr};
+  uint32_t asked_{0}, asked_at_{0}, note_until_{0};
 };
 
 class Cineville : public Component, public tessera::Plugin {
  public:
   void setup() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
+  void on_message(JsonObjectConst message) override;
   // What the tile that opens the card shows (today only, picks only), for the card to show the same.
   Filter opening;
+  FilmCard *card{nullptr};  // the card that is open, to hand it its answer
 };
 
 }  // namespace esphome::cineville

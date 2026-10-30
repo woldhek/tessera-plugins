@@ -1,5 +1,7 @@
 {
-  "_meta": { "name": "Nederlands" },
+  "_meta": {
+    "name": "Nederlands"
+  },
   "screen": {
     "choose_sensor": "Kies een Cineville-sensor voor deze tegel",
     "wrong_sensor": "Geen sensor van de Cineville-integratie",
@@ -14,7 +16,12 @@
     "opens": "Vanaf {date}",
     "previews": "1 voorpremière | {n} voorpremières",
     "more": "nog {n}",
-    "page": "{page} / {pages}"
+    "page": "{page} / {pages}",
+    "minutes": "{n} min",
+    "no_detail": "Kan deze film niet laden",
+    "seen": "Gezien",
+    "trailer": "Trailer",
+    "trailer_on": "Trailer start op {player}"
   },
   "app": {
     "name": "Cineville",

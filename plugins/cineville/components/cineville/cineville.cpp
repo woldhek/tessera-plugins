@@ -37,13 +37,15 @@ void FilmList::read(JsonObjectConst data) {
   JsonArrayConst titles = a["titles"].as<JsonArrayConst>(), picks = a["highlights"].as<JsonArrayConst>(),
                  directors = a["directors"].as<JsonArrayConst>(), shows = a["shows"].as<JsonArrayConst>(),
                  today = a["shows_today"].as<JsonArrayConst>(), next = a["next_start"].as<JsonArrayConst>(),
-                 venues = a["next_venue"].as<JsonArrayConst>(), premieres = a["premieres"].as<JsonArrayConst>();
+                 venues = a["next_venue"].as<JsonArrayConst>(), premieres = a["premieres"].as<JsonArrayConst>(),
+                 ids = a["ids"].as<JsonArrayConst>();
   films.clear();
   const int n = std::min<int>(titles.size(), MAX_FILMS);
   for (int i = 0; i < n; ++i) {
     Film f;
     copy(f.title, sizeof(f.title), titles[i] | "");
     if (!f.title[0]) continue;
+    copy(f.id, sizeof(f.id), ids[i] | "");
     copy(f.director, sizeof(f.director), directors[i] | "");
     copy(f.venue, sizeof(f.venue), venues[i] | "");
     const char *p = picks[i] | "";
@@ -180,6 +182,8 @@ int FilmRows::show(const FilmList &list, const tessera::List<uint8_t> &order, in
     const Film &f = list.films[index];
     const int y = i * h, top = y + (h - lines) / 2;
     s.film = index;
+    s.y = y;
+    s.h = h;
     lv_obj_set_pos(s.bar, 0, top);
     lv_obj_set_height(s.bar, lines);
     lv_obj_set_pos(s.title, x, top);
@@ -200,6 +204,12 @@ void FilmRows::repaint(const FilmList &list, const tessera::List<uint8_t> &order
     Slot &s = slots_[i];
     if (s.film >= 0 && s.film < static_cast<int>(list.films.size())) paint(s, list, list.films[s.film]);
   }
+}
+
+int FilmRows::film_at(int y) const {
+  for (int i = 0; i < count_; ++i)
+    if (slots_[i].film >= 0 && y >= slots_[i].y && y < slots_[i].y + slots_[i].h) return slots_[i].film;
+  return -1;
 }
 
 void FilmRows::hide() {
@@ -307,13 +317,19 @@ void FilmTile::on_theme() {
   ui::set_color(more_, theme::ACCENT);
 }
 
-// ---- The card: the whole list, a page at a time, each film with its director ----
+// ---- The card: the whole list, a page at a time; a tap on a film opens its detail page ----
+
+FilmCard::FilmCard(Cineville *plugin) : plugin_(plugin) {}
+FilmCard::~FilmCard() {
+  if (plugin_->card == this) plugin_->card = nullptr;
+}
 
 void FilmCard::open(const tessera::CardContext &c) {
   width_ = c.width;
   height_ = c.height;
   entity_ = roomy::text(std::string(c.entity ? c.entity : ""));
   filter_ = plugin_->opening;
+  plugin_->card = this;
   foot_ = std::max(ui::mm(10), ui::line_height(Font::BODY) + 2 * pad());
   const Font title = Font::BODY_LARGE;
   // Each film with its director on a line of its own, where the glass is large enough for it.
@@ -345,15 +361,42 @@ void FilmCard::open(const tessera::CardContext &c) {
   lv_obj_set_width(page_, width_ / 3);
   lv_obj_set_style_text_align(page_, LV_TEXT_ALIGN_CENTER, 0);
   lv_obj_set_pos(page_, width_ / 3, height_ - foot_ + (foot_ - ui::line_height(Font::BODY)) / 2);
+
+  // The detail page's parts, hidden until a film is tapped.
+  d_title_ = ui::label(c.parent, Font::TITLE, theme::INK);
+  d_meta_ = ui::label(c.parent, Font::BODY, theme::MUTED);
+  d_pick_ = ui::label(c.parent, Font::BODY, theme::ACCENT);
+  d_blurb_ = ui::text(c.parent, Font::BODY, theme::INK);
+  for (auto &l : d_shows_) l = ui::label(c.parent, Font::BODY, theme::INK_SOFT);
+  d_note_ = ui::text(c.parent, Font::BODY, theme::MUTED);
+  lv_obj_set_style_text_align(d_note_, LV_TEXT_ALIGN_CENTER, 0);
+  k_seen_ = ui::block(c.parent, theme::TRACK);
+  k_seen_text_ = ui::label(c.parent, Font::BODY_LARGE, theme::INK);
+  k_play_ = ui::block(c.parent, theme::ACCENT);
+  k_play_text_ = ui::label(c.parent, Font::BODY_LARGE, theme::ON_ACCENT);
+  for (auto *o : {k_seen_text_, k_play_text_}) lv_obj_set_style_text_align(o, LV_TEXT_ALIGN_CENTER, 0);
+  hide_detail();
   layout();
 }
 
 void FilmCard::on_state(JsonObjectConst data) {
   list_.read(data);
-  layout();
+  if (!detail_open_) layout();
+}
+
+void FilmCard::hide_list() {
+  rows_.hide();
+  for (auto *o : {note_, rule_, prev_, next_, page_}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+}
+
+void FilmCard::hide_detail() {
+  for (auto *o : {d_title_, d_meta_, d_pick_, d_blurb_, d_note_, k_seen_, k_seen_text_, k_play_, k_play_text_})
+    lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+  for (auto *o : d_shows_) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
 }
 
 void FilmCard::layout() {
+  if (detail_open_) return;
   list_.pick(filter_, order_);
   for (auto *o : {rule_, prev_, next_, page_}) lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
   const char *note = empty_note(entity_, list_, filter_, !order_.empty());
@@ -378,17 +421,230 @@ void FilmCard::layout() {
   }
 }
 
+// ---- The detail page ----
+
+// Ask the integration about one film (cineville.get_film); the answer comes in answer().
+void FilmCard::show_detail(int index) {
+  const Film &f = list_.films[index];
+  detail_ = Detail{};
+  copy(detail_.id, sizeof(detail_.id), f.id);
+  copy(detail_.title, sizeof(detail_.title), f.title);
+  copy(detail_.meta, sizeof(detail_.meta), f.director);
+  detail_.pick = f.pick;
+  detail_.premiere = f.premiere;
+  if (f.next) {
+    detail_.shows[0] = f.next;
+    copy(detail_.venues[0], sizeof(detail_.venues[0]), f.venue);
+  }
+  detail_open_ = true;
+  asked_ = 0;
+  if (f.id[0]) {
+    JsonDocument request;
+    request["ask"] = "call_service:cineville.get_film";
+    request["data"]["film"] = f.id;
+    asked_ = tessera::send(plugin_, request.as<JsonObjectConst>());
+    asked_at_ = tessera::epoch();
+  }
+  // Without an id (the integration before 0.2) or a way to ask, the page shows what the list knows.
+  if (!asked_) detail_.failed = true;
+  note_until_ = 0;
+  hide_list();
+  layout_detail();
+}
+
+void FilmCard::answer(JsonObjectConst message) {
+  asked_ = 0;
+  if (!detail_open_) return;
+  if (!(message["ok"] | false)) {
+    ESP_LOGW(TAG, "cineville.get_film: %s", message["error"] | "failed");
+    detail_.failed = true;
+    layout_detail();
+    return;
+  }
+  JsonObjectConst r = message["result"].as<JsonObjectConst>();
+  if (r["response"].is<JsonObjectConst>()) r = r["response"].as<JsonObjectConst>();
+  // The facts: director · 2026 · 196 min.
+  std::string meta = r["directors"] | detail_.meta;
+  const int year = r["year"] | 0, minutes = r["duration"] | 0;
+  if (year) meta += (meta.empty() ? "" : " · ") + std::to_string(year);
+  if (minutes) meta += (meta.empty() ? "" : " · ") + tessera::format(plugin_->text("minutes"), minutes);
+  copy(detail_.meta, sizeof(detail_.meta), meta.c_str());
+  // The blurb comes in pieces (the app cuts every text to 48 bytes): join them again.
+  std::string blurb;
+  for (JsonVariantConst piece : r["blurb_lines"].as<JsonArrayConst>()) blurb += piece | "";
+  if (blurb.empty()) blurb = r["blurb"] | "";
+  detail_.blurb = roomy::text(blurb);
+  int n = 0;
+  for (JsonObjectConst show : r["shows"].as<JsonArrayConst>()) {
+    if (n >= 4) break;
+    detail_.shows[n] = show["at"] | 0u;
+    copy(detail_.venues[n], sizeof(detail_.venues[n]), show["venue"] | "");
+    ++n;
+  }
+  if (n < 4) detail_.shows[n] = 0;
+  detail_.premiere = r["premiere"] | detail_.premiere;
+  detail_.trailer = r["has_trailer"] | false;
+  copy(detail_.player, sizeof(detail_.player), r["player"] | "");
+  detail_.loaded = true;
+  layout_detail();
+}
+
+void FilmCard::layout_detail() {
+  const int lt = ui::line_height(Font::TITLE), lb = ui::line_height(Font::BODY), gap = pad();
+  int y = 0;
+  lv_obj_set_pos(d_title_, 0, y);
+  lv_obj_set_width(d_title_, width_);
+  y += lt;
+  lv_obj_set_pos(d_meta_, 0, y);
+  lv_obj_set_width(d_meta_, width_);
+  y += lb;
+  lv_obj_set_pos(d_pick_, 0, y);
+  lv_obj_set_width(d_pick_, width_);
+  y += lb + gap;
+  // The keys at the foot, the showtimes above them, the blurb in between.
+  const int key_h = foot_ - gap, key_y = height_ - key_h;
+  int shows = 0;
+  while (shows < 4 && detail_.shows[shows]) ++shows;
+  const int room = key_y - gap - y;
+  // Keep three lines for the blurb (two on a small card), and give the showtimes what is left.
+  const int keep = (ui::large() ? 3 : 2) * lb;
+  shows = std::max(0, std::min(shows, (room - keep) / std::max(1, lb)));
+  const int shows_y = key_y - gap - shows * lb;
+  for (int i = 0; i < 4; ++i) {
+    lv_obj_set_pos(d_shows_[i], 0, shows_y + i * lb);
+    lv_obj_set_width(d_shows_[i], width_);
+    if (i < shows) lv_obj_remove_flag(d_shows_[i], LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(d_shows_[i], LV_OBJ_FLAG_HIDDEN);
+  }
+  const int blurb_h = std::max(0, (shows_y - gap - y) / lb * lb);
+  lv_obj_set_pos(d_blurb_, 0, y);
+  lv_obj_set_size(d_blurb_, width_, std::max(1, blurb_h));
+  lv_obj_set_pos(d_note_, 0, y);
+  lv_obj_set_size(d_note_, width_, std::max(1, std::min(blurb_h, 2 * lb)));
+  // Two keys side by side; "Trailer" only when there is one and a media player to play it on.
+  const int key_w = (width_ - gap) / 2;
+  lv_obj_set_pos(k_seen_, 0, key_y);
+  lv_obj_set_size(k_seen_, key_w, key_h);
+  lv_obj_set_pos(k_play_, width_ - key_w, key_y);
+  lv_obj_set_size(k_play_, key_w, key_h);
+  const int text_y = key_y + (key_h - ui::line_height(Font::BODY_LARGE)) / 2;
+  lv_obj_set_pos(k_seen_text_, 0, text_y);
+  lv_obj_set_width(k_seen_text_, key_w);
+  lv_obj_set_pos(k_play_text_, width_ - key_w, text_y);
+  lv_obj_set_width(k_play_text_, key_w);
+  paint_detail();
+}
+
+void FilmCard::paint_detail() {
+  ui::set_text(d_title_, detail_.title);
+  ui::set_text(d_meta_, detail_.meta);
+  std::string pick = detail_.pick == PICK_WEEK ? plugin_->text("pick_week")
+                     : detail_.pick == PICK_TIP ? plugin_->text("pick_tip") : "";
+  if (list_.soon && detail_.premiere) {
+    if (!pick.empty()) pick += " · ";
+    pick += tessera::fill(plugin_->text("opens"), "date", tessera::date_text(detail_.premiere));
+  }
+  ui::set_text(d_pick_, pick);
+  ui::set_tone(d_pick_, Tone::ACCENT, theme::ACCENT);
+  for (int i = 0; i < 4; ++i) {
+    if (!detail_.shows[i]) break;
+    std::string line = when(detail_.shows[i]);
+    if (detail_.venues[i][0]) line += std::string(" · ") + detail_.venues[i];
+    ui::set_text(d_shows_[i], line);
+    ui::set_color(d_shows_[i], theme::INK_SOFT);
+  }
+  // The blurb, or a word while it comes, when it could not come, or after a key was pressed.
+  const uint32_t now = tessera::epoch();
+  const char *note = nullptr;
+  std::string said;
+  if (note_until_ && now < note_until_) {
+    said = tessera::fill(plugin_->text("trailer_on"), "player", detail_.player);
+  } else if (!detail_.loaded) {
+    note = detail_.failed ? "no_detail" : "loading";
+  }
+  const bool blurb = note == nullptr && said.empty() && !detail_.blurb.empty();
+  if (blurb) ui::set_text(d_blurb_, roomy::plain(detail_.blurb));
+  if (!blurb) ui::set_text(d_note_, said.empty() ? std::string(note ? plugin_->text(note) : "") : said);
+  for (auto *o : {d_title_, d_meta_, d_pick_, k_seen_, k_seen_text_}) lv_obj_remove_flag(o, LV_OBJ_FLAG_HIDDEN);
+  if (pick.empty()) lv_obj_add_flag(d_pick_, LV_OBJ_FLAG_HIDDEN);
+  if (blurb) {
+    lv_obj_remove_flag(d_blurb_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(d_note_, LV_OBJ_FLAG_HIDDEN);
+  } else {
+    lv_obj_add_flag(d_blurb_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(d_note_, LV_OBJ_FLAG_HIDDEN);
+  }
+  ui::set_text(k_seen_text_, plugin_->text("seen"));
+  ui::set_fill(k_seen_, Tone::NORMAL, theme::TRACK);
+  ui::set_color(k_seen_text_, theme::INK);
+  const bool play = detail_.loaded && detail_.trailer && detail_.player[0];
+  ui::set_text(k_play_text_, plugin_->text("trailer"));
+  ui::set_fill(k_play_, Tone::ACCENT, theme::ACCENT);
+  ui::set_color(k_play_text_, theme::ON_ACCENT);
+  for (auto *o : {k_play_, k_play_text_}) {
+    if (play) lv_obj_remove_flag(o, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_add_flag(o, LV_OBJ_FLAG_HIDDEN);
+  }
+}
+
+bool FilmCard::on_back() {
+  if (!detail_open_) return false;
+  detail_open_ = false;
+  asked_ = 0;
+  hide_detail();
+  layout();
+  return true;
+}
+
 void FilmCard::on_tap() {
   const auto p = tessera::tap_point();
-  if (p.y < height_ - foot_) return;
-  const int pages = std::max(1, (static_cast<int>(order_.size()) + per_page_ - 1) / per_page_);
-  if (p.x < width_ / 3 && page_index_ > 0) --page_index_;
-  else if (p.x >= width_ * 2 / 3 && page_index_ + 1 < pages) ++page_index_;
-  else return;
-  layout();
+  if (p.y < 0) return;
+  if (detail_open_) {
+    const int key_y = height_ - (foot_ - pad());
+    if (p.y < key_y || !detail_.id[0]) return;
+    JsonDocument fields;
+    fields["film"] = detail_.id;
+    if (p.x < width_ / 2) {
+      // Seen: the integration takes it off the lists, and the card goes back to a list without it.
+      if (!tessera::action("cineville.mark_seen", "", fields.as<JsonVariantConst>()))
+        ESP_LOGW(TAG, "cineville.mark_seen was not sent");
+      on_back();
+    } else if (!lv_obj_has_flag(k_play_, LV_OBJ_FLAG_HIDDEN)) {
+      if (tessera::action("cineville.play_trailer", "", fields.as<JsonVariantConst>())) {
+        note_until_ = tessera::epoch() + 6;
+        paint_detail();
+      } else {
+        ESP_LOGW(TAG, "cineville.play_trailer was not sent");
+      }
+    }
+    return;
+  }
+  if (p.y >= height_ - foot_) {
+    const int pages = std::max(1, (static_cast<int>(order_.size()) + per_page_ - 1) / per_page_);
+    if (p.x < width_ / 3 && page_index_ > 0) --page_index_;
+    else if (p.x >= width_ * 2 / 3 && page_index_ + 1 < pages) ++page_index_;
+    else return;
+    layout();
+    return;
+  }
+  const int index = rows_.film_at(p.y);
+  if (index >= 0 && index < static_cast<int>(list_.films.size())) show_detail(index);
 }
 
 void FilmCard::on_tick(uint32_t epoch) {
+  if (detail_open_) {
+    // An answer that does not come within ten seconds will not: say so.
+    if (asked_ && epoch - asked_at_ > 10) {
+      asked_ = 0;
+      detail_.failed = true;
+      layout_detail();
+    }
+    if (note_until_ && epoch >= note_until_) {
+      note_until_ = 0;
+      paint_detail();
+    }
+    return;
+  }
   if (epoch % 60 == 0) layout();
 }
 
@@ -399,6 +655,11 @@ void FilmCard::on_theme() {
   ui::set_color(next_, theme::ACCENT);
   ui::set_color(page_, theme::MUTED);
   ui::set_fill(rule_, Tone::NORMAL, theme::LINE);
+  ui::set_color(d_title_, theme::INK);
+  ui::set_color(d_meta_, theme::MUTED);
+  ui::set_color(d_blurb_, theme::INK);
+  ui::set_color(d_note_, theme::MUTED);
+  if (detail_open_) paint_detail();
 }
 
 // ---- The plugin ----
@@ -406,6 +667,11 @@ void FilmCard::on_theme() {
 void Cineville::setup() {
   add_tile("films", [this]() { return new FilmTile(this); });
   add_card("films", [this]() { return new FilmCard(this); });
+}
+
+void Cineville::on_message(JsonObjectConst message) {
+  const uint32_t re = message["re"] | 0u;
+  if (re && card && card->asked() == re) card->answer(message);
 }
 
 }  // namespace esphome::cineville

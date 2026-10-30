@@ -15,19 +15,24 @@ the Netherlands, as on cineville.nl.
   previews your theaters have.
 - Tap the tile to see the whole list on a card (on a screen of 4 inches and up with each film's director), and page
   through it with the arrows.
+- Tap a film on the card for its own page: the director, year and length, a short blurb, and the next showtimes. Its
+  **Seen** key puts the film on your seen list, so it leaves the lists; its **Trailer** key plays the trailer on the
+  media player chosen in the integration's options (shown only when one is chosen).
 
 ## Set up
 
 1. In Home Assistant, open HACS, choose **Custom repositories** in the menu at the top right, add
    `https://github.com/woldhek/ha-cineville` as type **Integration**, then find **Cineville** in HACS and download it.
    Restart Home Assistant.
-2. In Home Assistant, go to **Settings → Devices & services → Add integration**, choose **Cineville**, pick your city
+2. In Home Assistant (the integration 0.2.0 or later), go to **Settings → Devices & services → Add integration**, choose **Cineville**, pick your city
    and, if you like, only some of its theaters. This makes two sensors: **Now showing** and **Coming soon**.
 3. Add this plugin to a screen in the Tessera app.
 4. In Layout, place the **Films** tile from the plugin library.
 5. In the inspector, choose one of the two Cineville sensors as the tile's entity, and optionally **Today** or **Only
    Cineville's picks**.
-6. Build and install the screen.
+6. For the **Seen** and **Trailer** keys: allow the screen to perform Home Assistant actions (in Home Assistant, the
+   screen's ESPHome device, **Configure**), and choose a media player in the Cineville integration's options.
+7. Build and install the screen.
 
 ## The integration
 
