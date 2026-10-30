@@ -1,0 +1,13 @@
+# What tools/preview.py shows: the tile with the trailer camera as Home Assistant has it (docs/PREVIEW.md).
+tiles:
+  - tile: trailer
+    name: Trailer
+    entity: camera.cineville_amsterdam_trailer
+  - tile: trailer
+    name: No camera yet
+    sizes: [2x1]
+
+states:
+  camera.cineville_amsterdam_trailer:
+    state: streaming
+    attributes: { friendly_name: Cineville Amsterdam Trailer, cineville_trailer: true, film_title: All of a Sudden }

@@ -1,0 +1,14 @@
+{
+  "_meta": { "name": "Nederlands" },
+  "screen": {
+    "choose_camera": "Kies de Cineville-trailercamera",
+    "wrong_camera": "Niet de Cineville-trailercamera",
+    "no_film": "Kies een trailer op de Cineville-kaart"
+  },
+  "app": {
+    "name": "Cineville-trailer (experimenteel)",
+    "summary": "De trailer die je op de Cineville-kaart koos, live met geluid, op een scherm dat kan streamen.",
+    "tile_name": "Trailer",
+    "tile_example": "All of a Sudden"
+  }
+}

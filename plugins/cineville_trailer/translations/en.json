@@ -1,0 +1,14 @@
+{
+  "_meta": { "name": "English" },
+  "screen": {
+    "choose_camera": "Choose the Cineville trailer camera",
+    "wrong_camera": "Not the Cineville trailer camera",
+    "no_film": "Choose a trailer on the Cineville card"
+  },
+  "app": {
+    "name": "Cineville trailer (experimental)",
+    "summary": "The trailer you chose on the Cineville card, live with its sound, on a screen that streams.",
+    "tile_name": "Trailer",
+    "tile_example": "All of a Sudden"
+  }
+}
