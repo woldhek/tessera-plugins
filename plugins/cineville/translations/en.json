@@ -1,5 +1,7 @@
 {
-  "_meta": { "name": "English" },
+  "_meta": {
+    "name": "English"
+  },
   "screen": {
     "choose_sensor": "Choose a Cineville sensor for this tile",
     "wrong_sensor": "Not a sensor of the Cineville integration",
@@ -14,7 +16,12 @@
     "opens": "Opens {date}",
     "previews": "1 preview | {n} previews",
     "more": "{n} more",
-    "page": "{page} / {pages}"
+    "page": "{page} / {pages}",
+    "minutes": "{n} min",
+    "no_detail": "Could not load this film",
+    "seen": "Seen",
+    "trailer": "Trailer",
+    "trailer_on": "Trailer starts on {player}"
   },
   "app": {
     "name": "Cineville",

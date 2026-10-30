@@ -30,6 +30,7 @@ states:
     attributes:
       friendly_name: Cineville Amsterdam Now showing
       cineville_list: now
+      ids: [db2148e7-9d83-4118-a636-7064e9a2d29b, f1, f2, f3, 29059902-d977-4f31-982d-540e7b1d66dd, f5, 708c0697-cce5-4348-9e4a-f573d2943fff, f7, 122379ea-28f2-4152-8aad-280d98bec3f9, 4933d718-4e31-4ffd-b62a-8c6e43e9ab2d, e7579484-b9ce-449a-a93f-348a84c4603b, 8435f274-cb7d-4d20-a5d1-47c18ec9e0bd, f12, f13, f14, f15]
       titles: [All of a Sudden, Naza, Wicker, Yellow Letters, Primetime, Sense and Sensibility, Andiamo a bere l'ultima,
                Digger, Coward, The Beloved, The Cycle of Love, Youri, Klara and the Sun, Erupcja, Akira (re-release),
                Wild Horse Nine]
@@ -50,6 +51,7 @@ states:
     attributes:
       friendly_name: Cineville Amsterdam Coming soon
       cineville_list: soon
+      ids: [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9]
       titles: [Amarga navidad, Wild Horse Nine, I Love Boosters, Vier minus drei, Carnaval, The Devils (re-release),
                Salvation, Hope, Donnie Darko (re-release), Spinoza]
       highlights: [tip, "", "", "", "", "", "", "", "", ""]
@@ -58,6 +60,23 @@ states:
       shows: [4, 12, 3, 0, 0, 0, 3, 0, 0, 0]
       premieres: ["{epoch+6d}", "{epoch+6d}", "{epoch+6d}", "{epoch+6d}", "{epoch+12d}", "{epoch+13d}",
                   "{epoch+13d}", "{epoch+13d}", "{epoch+20d}", "{epoch+20d}"]
+
+commands:
+  # What cineville.get_film answers, for a film's detail page (the bench gives the same answer for every film).
+  "call_service:cineville.get_film":
+    id: db2148e7-9d83-4118-a636-7064e9a2d29b
+    title: All of a Sudden
+    directors: Ryusuke Hamaguchi
+    year: 2026
+    duration: 196
+    highlight: week
+    blurb_lines: ["Tao Okamoto en Virginie Efira wandelen door", " Parijs en filosoferen over een betere", " wereld,
+                  in deze lekkere lange film van", " Ryûsuke Hamaguchi (Drive My Car)."]
+    has_trailer: true
+    player: Woonkamer TV
+    seen: false
+    shows: [{ at: "{epoch+35m}", venue: Kriterion }, { at: "{epoch+3h}", venue: Eye },
+            { at: "{epoch+26h}", venue: LAB111 }, { at: "{epoch+50h}", venue: Filmhallen }]
 
 cards:
   - { card: films, entity: sensor.cineville_amsterdam_now_showing }

@@ -7,9 +7,9 @@
 # whose attributes hold the films as short parallel lists. The tile belongs to that sensor; the screen reaches nothing
 # on the internet and needs no key.
 id: cineville
-version: 0.1.0
-# 0.10: tap_point() on the card's foot.
-api: "0.10"
+version: 0.2.0
+# 0.12: a card's on_tap (a film's row, the keys), tessera::action with a JSON object.
+api: "0.12"
 icon: movie-open
 maintainer: woldhek
 license: MIT
@@ -31,7 +31,7 @@ tiles:
     domains: [sensor]
     # Only the sensors of the Cineville integration: "Now showing" and "Coming soon" of each city set up.
     has_attributes: [cineville_list]
-    attributes: [cineville_list, titles, highlights, directors, shows, shows_today, next_start, next_venue, premieres]
+    attributes: [cineville_list, ids, titles, highlights, directors, shows, shows_today, next_start, next_venue, premieres]
     example: tile_example
     preview: { title: "{name}" }
     options:
@@ -41,3 +41,9 @@ tiles:
 
 cards:
   - { id: films, name: card_name }
+
+permissions:
+  # The card's detail page asks the integration about one film (its blurb and next showtimes); its keys mark the film
+  # seen and play its trailer on the media player chosen in the integration's options.
+  ha_commands: ["call_service:cineville.get_film"]
+  home_assistant_actions: [cineville.mark_seen, cineville.play_trailer]
