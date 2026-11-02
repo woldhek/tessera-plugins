@@ -5,7 +5,7 @@
    "likes": 0,
    "rating": null,
    "ratings": 1,
-   "homes": 1
+   "homes": 2
   },
   "cinema": {
    "likes": 2,
@@ -15,21 +15,27 @@
   },
   "custom_card": {
    "likes": 9,
-   "rating": null,
-   "ratings": 1,
-   "homes": 2
+   "rating": 3.7,
+   "ratings": 3,
+   "homes": 9
   },
   "electricity_price": {
    "likes": 1,
    "rating": null,
-   "ratings": 0,
-   "homes": 0
+   "ratings": 2,
+   "homes": 1
   },
   "flip_clock": {
-   "likes": 3,
+   "likes": 4,
+   "rating": 2.3,
+   "ratings": 3,
+   "homes": 11
+  },
+  "guition_relays": {
+   "likes": 0,
    "rating": null,
    "ratings": 1,
-   "homes": 1
+   "homes": 4
   },
   "microplant": {
    "likes": 2,
@@ -38,64 +44,64 @@
    "homes": 0
   },
   "new_music": {
-   "likes": 2,
+   "likes": 3,
    "rating": null,
    "ratings": 0,
-   "homes": 0
+   "homes": 5
   },
   "ov_departures": {
-   "likes": 2,
+   "likes": 3,
    "rating": null,
-   "ratings": 0,
+   "ratings": 1,
    "homes": 0
   },
   "photo_clock": {
    "likes": 2,
    "rating": null,
    "ratings": 0,
-   "homes": 0
+   "homes": 2
   },
   "photo_slideshow": {
-   "likes": 2,
+   "likes": 3,
    "rating": null,
    "ratings": 0,
-   "homes": 0
+   "homes": 1
   },
   "picture_frame": {
    "likes": 1,
    "rating": null,
    "ratings": 0,
-   "homes": 1
+   "homes": 5
   },
   "screen_camera": {
-   "likes": 0,
+   "likes": 1,
    "rating": null,
    "ratings": 1,
-   "homes": 1
+   "homes": 3
   },
   "tap_sound": {
    "likes": 1,
    "rating": null,
    "ratings": 1,
-   "homes": 1
+   "homes": 4
   },
   "vinyl_deck": {
    "likes": 1,
    "rating": null,
    "ratings": 0,
-   "homes": 0
+   "homes": 1
   },
   "voice_assist": {
-   "likes": 3,
-   "rating": null,
-   "ratings": 1,
-   "homes": 1
+   "likes": 4,
+   "rating": 4.3,
+   "ratings": 4,
+   "homes": 5
   },
   "waste_collection": {
    "likes": 6,
    "rating": null,
    "ratings": 1,
-   "homes": 1
+   "homes": 2
   },
   "waze_traveltime": {
    "likes": 2,
@@ -107,7 +113,7 @@
    "likes": 2,
    "rating": null,
    "ratings": 0,
-   "homes": 1
+   "homes": 3
   }
  }
 }
