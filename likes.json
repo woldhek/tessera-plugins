@@ -1,22 +1,27 @@
 {
  "format": 1,
  "likes": {
+  "buienradar": 1,
   "cinema": 2,
   "custom_card": 9,
   "electricity_price": 1,
+  "energy_flow": 3,
   "flip_clock": 4,
-  "microplant": 2,
   "new_music": 3,
   "ov_departures": 3,
   "photo_clock": 2,
   "photo_slideshow": 3,
   "picture_frame": 1,
   "screen_camera": 1,
+  "tankerkoenig": 1,
   "tap_sound": 1,
+  "thermo_dial": 2,
   "vinyl_deck": 1,
   "voice_assist": 4,
   "waste_collection": 6,
+  "waste_overview": 1,
   "waze_traveltime": 2,
+  "wifi_qr": 2,
   "world_clock": 2
  }
 }

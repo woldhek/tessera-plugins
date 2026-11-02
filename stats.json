@@ -7,6 +7,12 @@
    "ratings": 1,
    "homes": 2
   },
+  "buienradar": {
+   "likes": 1,
+   "rating": 4.3,
+   "ratings": 3,
+   "homes": 4
+  },
   "cinema": {
    "likes": 2,
    "rating": null,
@@ -19,11 +25,29 @@
    "ratings": 3,
    "homes": 9
   },
+  "dwd_rain": {
+   "likes": 0,
+   "rating": null,
+   "ratings": 0,
+   "homes": 1
+  },
   "electricity_price": {
    "likes": 1,
    "rating": null,
    "ratings": 2,
    "homes": 1
+  },
+  "energidata_price": {
+   "likes": 0,
+   "rating": null,
+   "ratings": 1,
+   "homes": 0
+  },
+  "energy_flow": {
+   "likes": 3,
+   "rating": null,
+   "ratings": 0,
+   "homes": 2
   },
   "flip_clock": {
    "likes": 4,
@@ -36,12 +60,6 @@
    "rating": null,
    "ratings": 1,
    "homes": 4
-  },
-  "microplant": {
-   "likes": 2,
-   "rating": null,
-   "ratings": 0,
-   "homes": 0
   },
   "new_music": {
    "likes": 3,
@@ -73,17 +91,47 @@
    "ratings": 0,
    "homes": 5
   },
+  "scmt": {
+   "likes": 0,
+   "rating": null,
+   "ratings": 0,
+   "homes": 2
+  },
   "screen_camera": {
    "likes": 1,
    "rating": null,
    "ratings": 1,
    "homes": 3
   },
+  "status_tile": {
+   "likes": 0,
+   "rating": null,
+   "ratings": 0,
+   "homes": 1
+  },
+  "tankerkoenig": {
+   "likes": 1,
+   "rating": null,
+   "ratings": 1,
+   "homes": 0
+  },
   "tap_sound": {
    "likes": 1,
    "rating": null,
    "ratings": 1,
    "homes": 4
+  },
+  "thermo_dial": {
+   "likes": 2,
+   "rating": null,
+   "ratings": 2,
+   "homes": 3
+  },
+  "timers": {
+   "likes": 0,
+   "rating": null,
+   "ratings": 1,
+   "homes": 2
   },
   "vinyl_deck": {
    "likes": 1,
@@ -103,7 +151,19 @@
    "ratings": 1,
    "homes": 2
   },
+  "waste_overview": {
+   "likes": 1,
+   "rating": null,
+   "ratings": 1,
+   "homes": 2
+  },
   "waze_traveltime": {
+   "likes": 2,
+   "rating": null,
+   "ratings": 0,
+   "homes": 0
+  },
+  "wifi_qr": {
    "likes": 2,
    "rating": null,
    "ratings": 0,
