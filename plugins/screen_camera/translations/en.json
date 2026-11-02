@@ -3,14 +3,22 @@
   "name": "English"
  },
  "screen": {
-  "name": "Screen camera",
-  "live": "Live",
-  "picture": "Camera"
+  "name": "Screen camera"
  },
  "app": {
   "name": "Screen camera",
-  "summary": "The screen's own camera as a camera in Home Assistant, with a camera in the top bar while it is watched.",
-  "bar_watching": "Camera in use",
-  "bar_example": "Live"
+  "summary": "The screen's own camera in Home Assistant, as live video with sound or as pictures, and the room's light level and motion from it.",
+  "setting_sensing": "Light level and motion",
+  "setting_sensing_hint": "The camera measures the room's light and notices movement, on the screen itself: no picture leaves it for this. The camera stays on while this is on.",
+  "setting_upside_down": "Camera upside down",
+  "setting_upside_down_hint": "Turns the camera's picture half way round, for a screen mounted the other way up from how it is built. The pictures, the video and the light level and motion all follow.",
+  "setting_field_of_view": "Camera field of view",
+  "setting_field_of_view_hint": "Full, the default, shows all the camera sees: its whole width and height at half the resolution, 15 pictures a second. Sharp shows the middle of the picture at full resolution and 30 a second, as before. On the Guition screens' camera, with the part Video; any other camera keeps Sharp, and a mode that gives no picture goes back to Sharp by itself.",
+  "setting_wake": "Motion wakes the screen",
+  "setting_wake_hint": "With light level and motion on, someone moving in front of the screen wakes it, as a touch does.",
+  "setting_time_out": "Motion time-out",
+  "setting_time_out_hint": "How long Motion stays on after the last movement: a few seconds for someone walking past, minutes to tell an empty room.",
+  "part_video": "Video",
+  "part_video_hint": "Live video with sound in Home Assistant, as a camera Video on the screen's device. The camera then runs from the start; its pictures come from the video. Install Video in Home Assistant once under Tessera's Settings."
  }
 }

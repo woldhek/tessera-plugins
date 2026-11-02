@@ -1,0 +1,50 @@
+# NOTICE: the OV02C10 component of Tessera's Screen camera
+
+This folder adds the OmniVision OV02C10 to esp_video_camera: a sensor driver for Espressif's esp_cam_sensor and an
+image tuning for esp_video's ISP pipeline. It was written and first tried on a Guition JC8012P4A1 V3 by Jeroen Peters
+(@Heronimonimo). The plugin as a whole is distributed under GPL-3.0-only; the notices below stay with their files.
+
+## Where the files come from
+
+* `ov02c10_settings.h`, `ov02c10_regs.h`, `ov02c10_types.h`, `ov02c10.h`: Guition's OV02C10 driver files, as their
+  own copy of esp_cam_sensor in the JC4880P443C firmware SDK publishes them (seen at
+  github.com/wegi1/ESP32P4-JC4880P443C-I-W, `1-Demo/idf_examples/components/espressif__esp_cam_sensor/sensors/ov02c10`).
+  They carry Espressif's `SPDX-License-Identifier: Apache-2.0` header, kept as it is. They came here through
+  github.com/sullb/esphome-p4-csi-camera (MIT License, below; copied 2026-10-18), which changed a few start values: 23
+  lines of the register tables differ from Guition's, and the 1288x728 table that is used is the same. `ov02c10_regs.h`
+  lost an unused OV5640 define on 2026-10-20.
+* `ov02c10_sensor.c` and `ov02c10_compat.h`: sullb's version of Guition's driver, in the structure of Espressif's
+  esp_cam_sensor drivers (Apache-2.0, the SPDX header is kept). Changed on 2026-10-19, as its header says: exposure,
+  analog gain and orientation on the sensor's own registers, the OV5640 registers removed, the chip id checked.
+* Linux's drivers/media/i2c/ov02c10.c (GPL-2.0) was read as a reference for what the registers mean (exposure at
+  0x3501, analog gain at 0x3508, mirror and flip in 0x3820, the window offsets and limits). No code and no register
+  table was copied from it.
+* `ipa/ov02c10_p4_eco5.json` and `ipa/ov02c10_p4_eco4.json`: Guition's own image tuning for the OV02C10 of its
+  screens, the files `cfg/ov02c10_default_p4_eco5.json` and `cfg/ov02c10_default_p4_eco4.json` of the OV02C10 driver
+  package Guition shared with Tessera, unchanged under this plugin's names (since 0.6.5). Up to 0.6.4 they were derived
+  from Espressif's `sc2336_default_p4_eco4.json` and its rev3 tunings (esp_cam_sensor, Apache-2.0).
+  `ipa/CMakeLists.txt`, `ipa/project_include.cmake` and `__init__.py` are this plugin's own.
+
+## MIT License of sullb/esphome-p4-csi-camera
+
+MIT License
+
+Copyright (c) 2026 sullb
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

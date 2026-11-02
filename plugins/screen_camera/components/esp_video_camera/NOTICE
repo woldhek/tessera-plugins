@@ -59,3 +59,21 @@ configuration file taken from the original pull request.
 
 This folder is the component as published at github.com/n-IA-hane/esphome-esp-video-camera, release v2026.9.2
 (commit 6d247d7), copied without changes. The plugin's own code is in `components/screen_camera/`.
+
+## Changed in Tessera's copy
+
+`__init__.py` takes `jpeg_quality` as esp_video does (1 to 100, higher is better, default 80) instead of 1 to 63
+(default 10), and `esp_video_camera.h`'s default follows: the value goes straight to
+V4L2_CID_JPEG_COMPRESSION_QUALITY (2026-10-19).
+
+## Changed in Tessera's copy: the sensors
+
+`__init__.py` no longer turns on esp_cam_sensor's sensors (SC202CS, OV5647, SC2336, each with its auto-detect) nor the
+SC202CS's colour tuning from `cfg/sc202cs.json`: Screen camera's `components/screen_camera/sensors.py` does, from a
+table, with the same Kconfig options and the same build file (2026-10-24). The place is marked "Tessera".
+
+## Changed in Tessera's copy: the sensor's exposure
+
+`esp_video_camera.h` and `.cpp` add `read_sensor_exposure()`, which a raw frame consumer calls on the capture task
+to read the sensor's exposure time and gain through esp_video's V4L2 controls (for Screen camera's light level,
+2026-10-19). Both places are marked "Tessera".

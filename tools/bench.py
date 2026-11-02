@@ -296,7 +296,7 @@ SHOWN = re.compile(r'[^a-z0-9_.-]+')
 # logs when a saver comes on the glass, and what each step draws from when preview.yaml gives nothing (the contract of
 # docs/FIRMWARE_API.md, "A screensaver"). Home Assistant's MediaPlayerEntityFeature: PAUSE 1, VOLUME_SET 4,
 # VOLUME_MUTE 8, PREVIOUS_TRACK 16, NEXT_TRACK 32, VOLUME_STEP 1024, PLAY 16384.
-SAVER_PICTURE = 'saver:picture'
+SAVER_PICTURE = 'step:'
 SAVER_SHOWN = re.compile(r'screensaver (plugin:\S+) \(\w+\) on the glass')
 SAVER_STILL_SECONDS = 120
 STEP_SAMPLES = {
@@ -686,7 +686,8 @@ class Bench(run.Run):
             return
         self.read.add((entity, attribute))
         known = self.states.get(entity)
-        value = None if not known else known['state'] if attribute is None else known['attributes'].get(attribute)
+        # The API sends "" for a sensor of the entity's state, not None: both are the state.
+        value = None if not known else known['state'] if not attribute else known['attributes'].get(attribute)
         if value is None:
             self.find('info', 'Home Assistant', f'the screen reads {entity}{" " + attribute if attribute else ""}; '
                       'preview.yaml has no such state, so it stays empty')
@@ -754,7 +755,7 @@ class Bench(run.Run):
         as the app would answer (server.answer_plugin_pictures): the frames of
         the question painted with the files preview.yaml's `pictures` names for each address (relative to the plugin's
         folder), a drawn stand-in for an address it does not name, and the checks the app makes (the manifest's
-        `pictures`, where a picture may come from). A screensaver's `saver:picture`, the step's own picture, is the
+        `pictures`, where a picture may come from). A screensaver's `step:`, the step's own picture, is the
         example's `picture` of preview.yaml's `savers`, or a drawn cover (the music) or photo (the photos)."""
         import plugin_pictures
         import tile_art

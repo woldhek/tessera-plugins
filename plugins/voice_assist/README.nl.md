@@ -30,11 +30,25 @@ Houd de bovenbalk vast, dan **Instellingen**, **Plugins**, **Spraakassistent**:
 - **Wekzin**: Okay Nabu, Hey Jarvis of Hey Mycroft.
 - **Wekgeluid**: een kort geluid als het scherm begint te luisteren, na de wekzin of een tik.
 - **Denkgeluid**: een zacht geluid, steeds opnieuw, zolang Home Assistant het antwoord bedenkt.
+- **Popup tonen**: een popup over het scherm terwijl het luistert, nadenkt en antwoordt (aan, tenzij je hem uitzet). Zie hieronder.
 - **Nu vragen**: stelt meteen een vraag.
 
 De instellingen zijn ook entiteiten van het scherm in Home Assistant ("Wake word", "Wake phrase", "Wake sound",
 "Thinking sound"), en de editor toont ze in de details van de plugin op het tabblad Plugins van het scherm. De eigen schakelaar **Microfoon** van het
 scherm, op een bord dat er een heeft, zet hem ook voor de assistent uit.
+
+## De popup
+
+Zodra het scherm de wekzin hoort, of je op de tegel tikt, komt er een popup over het scherm, ook als het scherm donker
+was of sliep. Terwijl het luistert rimpelen er ringen uit de microfoon, terwijl Home Assistant nadenkt draait er een
+boog, en daaronder verschijnt wat het hoorde en daarna het antwoord, woord voor woord zoals de speaker het zegt; van een
+lang antwoord zie je de laatste regels. De popup blijft 30 seconden staan na het antwoord, zodat je het nog eens kunt
+lezen. De sluitknop, een tik erop of een tik ernaast sluit hem eerder; tijdens een vraag stopt een tik op de popup die
+vraag. Hij heeft Tessera met plugin-API 0.18 nodig.
+
+De woorden van het antwoord komen in één keer van Home Assistant, aan het eind van het antwoord: Home Assistant stuurt
+een ESPHome-scherm geen antwoord in stukjes terwijl het wordt geschreven. De popup laat ze zien in het tempo van
+spreken, gelijk met de speaker.
 
 ## De geluiden
 

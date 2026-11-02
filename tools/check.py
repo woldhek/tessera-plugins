@@ -64,7 +64,52 @@ API_PARTS = [((0, 9), re.compile(r'Font::DIGITS|\bui::covers\s*\(|Tone::GOOD|\bu
              # A screensaver (docs/FIRMWARE_API.md, "A screensaver"): the manifest's `savers` needs 0.14 as well.
              ((0, 14), re.compile(r'\badd_saver\s*\(|\bSaver(?:Context|Step)?\b|\bui::takes_taps\s*\(|\btessera::wish\s*\('
                                   r'|\bWish::|\btessera::drift\s*\('),
-              'a screensaver (add_saver, Saver, SaverContext, SaverStep), ui::takes_taps, tessera::wish and tessera::drift')]
+              'a screensaver (add_saver, Saver, SaverContext, SaverStep), ui::takes_taps, tessera::wish and tessera::drift'),
+             # A popup (docs/FIRMWARE_API.md, "A popup").
+             ((0, 18), re.compile(r'\bshow_popup\s*\(|\bclose_popup\s*\(|\bpopup_shown\s*\(|\bPopup(?:Context|Width)?\b'
+                                  r'|\bui::animate\s*\(|\bui::still\s*\(|\bMotion::'),
+              'a popup (show_popup, close_popup, popup_shown, Popup, PopupContext, PopupWidth), ui::animate and ui::still')]
+
+# Forms of the C++ API a minor took away (docs/FIRMWARE_API.md, "Versions"): a plugin that still uses one fails its
+# screen's build at that call on a core of that minor or later, whatever its `api` says, since such a minor is not in
+# PLUGIN_API_BREAKS (that would refuse every plugin written before it). So the check refuses the form itself.
+REMOVED_PARTS = [((0, 24), re.compile(r'\bvoid\s+on_touch\s*\('),
+                  'Plugin::on_touch went in plugin API 0.24: use on_press'),
+                 ((0, 24), 'action-key-value',
+                  'the key and value form of tessera::action went in plugin API 0.24: pass the fields as a JSON object, '
+                  'action(service, entity, fields)')]
+
+
+def call_arguments(code, name):
+    """Where `name(` is called in `code`, with how many arguments it has at its own depth."""
+    for match in re.finditer(re.escape(name) + r'\s*\(', code):
+        depth, count, i = 1, 1, match.end()
+        empty = True
+        while i < len(code) and depth:
+            c = code[i]
+            if c in '([{':
+                depth += 1
+            elif c in ')]}':
+                depth -= 1
+            elif c == ',' and depth == 1:
+                count += 1
+            elif c == '"':
+                i += 1
+                while i < len(code) and code[i] != '"':
+                    i += 2 if code[i] == '\\' else 1
+            if not c.isspace() and depth:
+                empty = False
+            i += 1
+        yield match.start(), 0 if empty else count
+
+
+def removed_part(code, rule):
+    """The offset of the first use of a removed form in `code`, or None."""
+    if rule == 'action-key-value':
+        return next((at for at, count in call_arguments(code, 'tessera::action') if count >= 4), None)
+    match = rule.search(code)
+    return match.start() if match else None
+
 
 # What plugin.yaml (and a part's file) never sets at its top level (docs/LIMITS.md, "plugin.yaml"). It is merged into
 # the screen's own configuration, so these would change what the core and the screen's own YAML hold, or open the
@@ -606,6 +651,10 @@ def check_folder(folder):
                     line = code[:match.start()].count('\n') + 1
                     fail(name, f'{path.relative_to(folder)}:{line}: {what} came with plugin API {minor[0]}.{minor[1]}: '
                                f'the manifest says api "{manifest["api"]}"')
+            for minor, rule, why in REMOVED_PARTS:
+                at = removed_part(code, rule) if tuple(pm().PLUGIN_API) >= minor else None
+                if at is not None:
+                    fail(name, f'{path.relative_to(folder)}:{code[:at].count(chr(10)) + 1}: {why}')
             for rule, why in CODE_RULES + (SCREEN_RULES if screen else []):
                 match = rule.search(code)
                 if match:

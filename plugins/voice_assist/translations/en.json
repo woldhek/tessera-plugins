@@ -1,36 +1,39 @@
 {
- "_meta": {
-  "name": "English"
- },
- "screen": {
-  "name": "Voice assistant",
-  "listening": "Listening…",
-  "thinking": "Thinking…",
-  "answering": "Answering",
-  "failed": "That did not work",
-  "away": "Home Assistant is away",
-  "say_phrase": "Say “{phrase}”",
-  "tap_to_ask": "Tap to ask",
-  "wake_word": "Wake word",
-  "wake_phrase": "Wake phrase",
-  "ask": "Ask now",
-  "wake_sound": "Wake sound",
-  "thinking_sound": "Thinking sound"
- },
- "app": {
-  "name": "Voice assistant",
-  "summary": "Talk to Home Assistant's Assist from the screen: a wake word on the screen itself, the answer on its speaker.",
-  "tile_name": "Assistant",
-  "tile_example": "Say “Okay Nabu”",
-  "bar_busy": "Assistant",
-  "bar_example": "Listening…",
-  "setting_wake_word": "Wake word",
-  "setting_wake_word_hint": "Whether the screen listens for its wake phrase. Off, a tap on the assistant's tile still asks.",
-  "setting_wake_phrase": "Wake phrase",
-  "setting_wake_phrase_hint": "What you say to start a question. The screen recognises it itself, nothing leaves it until then.",
-  "setting_wake_sound": "Wake sound",
-  "setting_wake_sound_hint": "A short sound when the screen starts to listen, after the wake phrase or a tap.",
-  "setting_thinking_sound": "Thinking sound",
-  "setting_thinking_sound_hint": "A soft sound, again and again, while Home Assistant works out the answer."
- }
+  "_meta": {
+    "name": "English"
+  },
+  "screen": {
+    "name": "Voice assistant",
+    "listening": "Listening…",
+    "thinking": "Thinking…",
+    "answering": "Answering",
+    "failed": "That did not work",
+    "away": "Home Assistant is away",
+    "say_phrase": "Say “{phrase}”",
+    "tap_to_ask": "Tap to ask",
+    "wake_word": "Wake word",
+    "wake_phrase": "Wake phrase",
+    "ask": "Ask now",
+    "wake_sound": "Wake sound",
+    "thinking_sound": "Thinking sound",
+    "show_popup": "Show popup"
+  },
+  "app": {
+    "name": "Voice assistant",
+    "summary": "Talk to Home Assistant's Assist from the screen: a wake word on the screen itself, the answer on its speaker.",
+    "tile_name": "Assistant",
+    "tile_example": "Say “Okay Nabu”",
+    "bar_busy": "Assistant",
+    "bar_example": "Listening…",
+    "setting_wake_word": "Wake word",
+    "setting_wake_word_hint": "Whether the screen listens for its wake phrase. Off, a tap on the assistant's tile still asks.",
+    "setting_wake_phrase": "Wake phrase",
+    "setting_wake_phrase_hint": "What you say to start a question. The screen recognises it itself, nothing leaves it until then.",
+    "setting_wake_sound": "Wake sound",
+    "setting_wake_sound_hint": "A short sound when the screen starts to listen, after the wake phrase or a tap.",
+    "setting_thinking_sound": "Thinking sound",
+    "setting_thinking_sound_hint": "A soft sound, again and again, while Home Assistant works out the answer.",
+    "setting_show_popup": "Show popup",
+    "setting_show_popup_hint": "A popup over the screen while it listens, thinks and answers, with what it heard and the answer as it is spoken."
+  }
 }

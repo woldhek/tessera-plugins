@@ -3,14 +3,22 @@
   "name": "Nederlands"
  },
  "screen": {
-  "name": "Schermcamera",
-  "live": "Live",
-  "picture": "Camera"
+  "name": "Schermcamera"
  },
  "app": {
   "name": "Schermcamera",
-  "summary": "De eigen camera van het scherm als camera in Home Assistant, met een camera in de bovenbalk zolang er iemand kijkt.",
-  "bar_watching": "Camera in gebruik",
-  "bar_example": "Live"
+  "summary": "De eigen camera van het scherm in Home Assistant, als live video met geluid of als foto's, en daaruit het lichtniveau en beweging in de kamer.",
+  "setting_sensing": "Lichtniveau en beweging",
+  "setting_sensing_hint": "De camera meet het licht in de kamer en merkt beweging op, op het scherm zelf: hiervoor gaat geen beeld van het scherm af. De camera blijft aan zolang dit aan staat.",
+  "setting_upside_down": "Camera omgekeerd",
+  "setting_upside_down_hint": "Draait het beeld van de camera een halve slag, voor een scherm dat andersom hangt dan hoe het gebouwd is. De plaatjes, de video en de lichtsterkte en beweging volgen allemaal.",
+  "setting_field_of_view": "Beeldveld camera",
+  "setting_field_of_view_hint": "Full, de standaard, toont alles wat de camera ziet: de hele breedte en hoogte op de halve resolutie, 15 beelden per seconde. Sharp toont het midden van het beeld op volle resolutie en 30 per seconde, zoals voorheen. Op de camera van de Guition-schermen, met het onderdeel Video; elke andere camera houdt Sharp, en een stand die geen beeld geeft, gaat vanzelf terug naar Sharp.",
+  "setting_wake": "Beweging wekt het scherm",
+  "setting_wake_hint": "Met lichtniveau en beweging aan wekt iemand die voor het scherm beweegt het scherm, zoals een aanraking.",
+  "setting_time_out": "Beweging blijft aan",
+  "setting_time_out_hint": "Hoe lang Beweging aan blijft na de laatste beweging: een paar seconden voor iemand die langsloopt, minuten om een lege kamer te zien.",
+  "part_video": "Video",
+  "part_video_hint": "Live video met geluid in Home Assistant, als camera Video bij het apparaat van het scherm. De camera loopt dan vanaf de start; zijn foto's komen uit de video. Installeer eenmalig Video in Home Assistant onder Instellingen van Tessera."
  }
 }

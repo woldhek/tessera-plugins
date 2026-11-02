@@ -54,7 +54,7 @@ stays on the commit it was built with: a newer version shows as an update on the
 builds it.
 
 Plugins are new and only in the dev version of the app for now (the app added with `#dev` at the end of the repository
-URL, or a local copy). The plugin API is 0.14 (an older one in the release until the next), and a plugin names the version it was written for. While the API is 0.x
+URL, or a local copy). The plugin API is 0.24 (an older one in the release until the next), and a plugin names the version it was written for. While the API is 0.x
 a minor may still change a name: the core lists the minors that did (only 0.4 so far), a plugin written before one no
 longer builds and says so, and Tessera's own plugins move with it ([docs/FIRMWARE_API.md](docs/FIRMWARE_API.md),
 "Versions").

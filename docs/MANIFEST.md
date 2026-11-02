@@ -87,7 +87,7 @@ fetch:
       label: [LinePublicNumber, DestinationName50]
 ```
 
-It names `api: "0.7"` and builds on today's core, which offers plugin API 0.14: no minor after 0.7 changed a name
+It names `api: "0.7"` and builds on today's core, which offers plugin API 0.24: no minor after 0.7 changed a name
 ([FIRMWARE_API.md](FIRMWARE_API.md), "Versions"). The fetch is plain `http` because OVapi offers nothing else and the
 fetch carries no secret.
 
@@ -109,7 +109,7 @@ fetch carries no secret.
 |---|---|---|
 | `id` | yes | The plugin's id. Unique in the index, the same as its folder and its component, and never changed. |
 | `version` | yes | Three numbers, `1.0.0`. Raise it for every change that reaches screens, and give it a `## 1.0.0` heading with its lines at the top of `CHANGELOG.md` ([MAKING_A_PLUGIN.md](MAKING_A_PLUGIN.md#the-changelog)). |
-| `api` | yes | The plugin API it was written for, as major and minor in quotes: `"0.8"`; the plugin API 0.14 is the one the core offers now (on Tessera's dev branch; the release has an older one until the next). Without quotes YAML reads a number, which the check refuses. It builds on a core with the same major and at least that minor, unless a minor after its own up to the core's changed a name (0.4 did); `tools/check.py` refuses an `api` newer than the core it checks against, and one from before such a minor ([FIRMWARE_API.md](FIRMWARE_API.md), "Versions"). |
+| `api` | yes | The plugin API it was written for, as major and minor in quotes: `"0.8"`; the plugin API 0.24 is the one the core offers now (on Tessera's dev branch; the release has an older one until the next). Without quotes YAML reads a number, which the check refuses. It builds on a core with the same major and at least that minor, unless a minor after its own up to the core's is listed as a break (0.4, where a name changed its meaning; a form a minor takes away, as 0.24 did four, fails in the compiler at its call instead); `tools/check.py` refuses an `api` newer than the core it checks against, and one from before such a minor ([FIRMWARE_API.md](FIRMWARE_API.md), "Versions"). |
 | `icon` | yes | <a id="icon"></a>A Material Design Icons name from Tessera's icon set (`screen_manager/app/tile_icons.py` in the Tessera repository, such as `bus`, `train`, `calendar`, `thermometer`, `lightbulb`). The screen's icon font holds only that set. Tiles and top bar items take it when they name no icon of their own. |
 | `maintainer` | yes | The GitHub name of whoever looks after the plugin, 1 to 39 characters. `tools/check.py` refuses the template's `your-github-name` in any folder but `template/`. |
 | `license` | yes | An SPDX name that goes with AGPL-3.0: `MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `MPL-2.0`, `LGPL-2.1-or-later`, `LGPL-3.0-or-later`, `GPL-3.0-or-later`, `GPL-3.0-only`, `AGPL-3.0-or-later`, `AGPL-3.0-only`, `Unlicense`, `0BSD`, `CC0-1.0`. |
@@ -239,6 +239,10 @@ A `text`, `gpio` or `entity` input reaches the screen's build as a substitution 
 `plugin.yaml`. A `secret` never does. Give each a default in `plugin.yaml` (`defaults: { PIN: GPIO22 }`) so a build
 without the value still works.
 
+An `entity` input is built into the screen: the same entity for every tile of the plugin on that screen, and another
+one is a new build. An entity a person chooses per tile, which the app sends and follows without a build, is a tile's
+option of kind `entity` (0.15, below).
+
 A fetch may name an input as a placeholder, but the app fills in only secrets there (a secret with `scope: screen` is
 the one filled in for the tile's screen). A value a fetch needs that is not a secret is a tile's option.
 
@@ -270,7 +274,7 @@ At most 8.
 | `name` | yes | Text key: what the library and the inspector call it. |
 | `icon` | no | From Tessera's icon set; the plugin's icon when left out. The editor shows it, and a screen without the plugin draws it on its placeholder. |
 | `sizes` | yes | `{ min: 1x1, max: 2x2 }`, columns x rows, each 1 to 9; `min` is not larger than `max` in either. The editor offers the sizes in between that fit the screen's grid. `full: true` is accepted, but neither the app nor the editor uses it yet. |
-| `memory` | yes | What one tile costs of the screen's layout memory, a whole number of bytes from 64 to 16384 (also written `{ bytes: 1200 }`). The screen and the app add it to the layout's budget, and the build refuses a value outside that range too. About 400 for a few labels, 1200 for a list. |
+| `memory` | yes | What one tile costs of the screen's layout memory, a whole number of bytes from 64 to 16384. The screen and the app add it to the layout's budget, and the build refuses a value outside that range too. About 400 for a few labels, 1200 for a list. |
 | `domains` | no | Up to 8 domains of the entity the tile belongs to (0.2), `[calendar]`, as a tap action and an input of kind `entity` name theirs. The inspector offers the entities of those domains, also of a domain Tessera draws no tile for; the tile gets the entity's state, name and `attributes`, again at every change. Its entity id in `TileContext::entity`, for such a domain, needs the firmware after 0.56.0 ([FIRMWARE_API.md](FIRMWARE_API.md), "A tile of an entity"). |
 | `attributes` | no | With `domains`: the attributes the tile gets, at most 16, each a name of `a-z`, `0-9` and `_` of up to 48 characters, not starting with a digit. One named `..._at`, `..._time` or `...date` that holds a moment comes as seconds since 1970. A list comes whole when it fits: texts and numbers, not objects. |
 | `fields` | no | With `domains` (0.5): values taken out of the entity's attributes with the paths and kinds of a fetch's map ([FETCH.md](FETCH.md)), 1 to 8, each named apart from `attributes`, `state` and `name`. `{ prices: { path: "raw_today[*].value", as: numbers } }` turns a list of 96 objects into one list of 96 numbers, which fits where the objects would not. |
@@ -278,7 +282,7 @@ At most 8.
 yet to offer the sensors of one `device_class` (every CO2 sensor), so a common attribute such as `unit_of_measurement`
 still offers every sensor that has one. Only the list: the tile keeps its entity when an attribute is gone for a while (an entity that is unavailable has none). |
 | `data` | no | The id of the fetch whose answer the tile gets in `on_state`. |
-| `pictures` | no | Places for pictures on the tile (0.10), 1 to 8: how many the tile makes at most with `ui::picture` ([FIRMWARE_API.md](FIRMWARE_API.md), "Pictures on a tile"). The app paints a picture only for a tile that has this, at most this many, and only from a host of `permissions.network` or, for a tile with `domains`, Home Assistant's own pictures of its entity (`entity_picture`). A plugin whose pictures come from a host names it in `permissions.network`, which gives it the attribute `cloud` and asks for a `privacy` link. Default: 0, no pictures. |
+| `pictures` | no | Places for pictures on the tile (0.10), 1 to 8: how many the tile makes at most with `ui::picture` ([FIRMWARE_API.md](FIRMWARE_API.md), "Pictures on a tile"). The app paints a picture only for a tile that has this, at most this many, and only from a host of `permissions.network` or, for a tile with `domains`, Home Assistant's own pictures of its entity (`entity_picture`, or from 0.17 `cover:`, `camera:` and `entity:` of that entity, which need no `attributes`). A plugin whose pictures come from a host names it in `permissions.network`, which gives it the attribute `cloud` and asks for a `privacy` link. Default: 0, no pictures. |
 | `example` | no | Text key: a line the editor shows on the tile's placeholder. |
 | `preview` | no | How the editor draws the tile from its data, so the page in the editor looks like the glass (it cannot run your C++). Only with `data` or `domains`. Any of `badge`, `title`, `value` and `countdown`, each a text of 1 to 64 characters. `badge`, `title` and `value` are templates of the first item's fields (`"{line}"`, `"{to}"`; for a tile of an entity `{state}`, `{name}`, its `attributes` and its `fields`), and every `{name}` in them must be such a field. `countdown` names a field with `as: epoch` (for a tile of an entity also an attribute named `..._at`, `..._time` or `...date`), and the editor counts down to it in whole minutes (the editor's clock moves every 30 seconds). `value` or `countdown`, not both. Without a preview the editor shows the icon, the name and `example`. |
 | `options` | no | At most 12 options the inspector shows, below. |
@@ -287,7 +291,7 @@ An option:
 
 | Field | What |
 |---|---|
-| `id`, `kind`, `label` | Required. `kind` is `text`, `choice`, `number` or `toggle`; `label` is a text key. |
+| `id`, `kind`, `label` | Required. `kind` is `text`, `choice`, `number`, `toggle` or (0.15) `entity`; `label` is a text key. |
 | `hint` | Text key under the option. |
 | `default` | The value when nothing is chosen. It must fit the option: `true` or `false` for a toggle, a number from `min` to `max` for a number, a text of at most 64 characters for a text or a choice, and for a choice with `choices` one of their values (or `""`). |
 | `choices` | For `choice`: `[{ value: "a", label: key }]`, at most 48, each with both: `value` a text of 1 to 64 characters, `label` a text key. |
@@ -295,6 +299,7 @@ An option:
 | `multiple` | For `text` and `choice` (0.12): the option keeps a list of up to this many values, 2 to 16, in the order the person put them (they drag them into another). A text list keeps texts; a choice keeps picks (below). Its default is `[]`; a text list may name a list of texts. A fetch uses a list through `each` or `{name\|,}` ([FETCH.md](FETCH.md)). |
 | `search` | For `choice` with `options_from` (0.12): `true` finds the choices by what the person types. The editor sends it, from two characters on, as `{search}` of that fetch: `url: https://api.deezer.com/search/artist?q={search}`. Without `multiple` the option keeps one pick. No option of the tile may be called `search`. |
 | `min`, `max`, `step`, `unit` | For `number`: the range (both required, `min` less than `max`), the step (more than 0, default 1), and a unit of up to 8 characters. |
+| `domains`, `attributes` | For `entity` (0.15): the domains whose entities the person may choose, 1 to 8 (`[sensor]`), and the attributes the tile reads of the chosen one, as a tile's own `attributes`. Only in a tile's options, and only with `api: "0.15"` or later. |
 
 A field that belongs to another kind is an error (`min` on a text option, `choices` on a number). A text option's value
 is at most 64 characters. The tile gets every option in `context.options` of `create()`, with the defaults filled in.
@@ -306,6 +311,18 @@ person saw in the list. A list from a fetch may be gone or other next week, so t
 plugin's own `choices` the label is the choice's text in the editor's language. Each value and label is at most 64
 characters, and a list holds each value once. All options of a tile together are at most 1280 bytes of JSON: they travel
 to the screen with the tile's data in one message, and the editor refuses a value that would not fit.
+
+An option of kind `entity` (0.15) keeps the id of the entity chosen, `"sensor.grid_power"`, or `""`. The inspector offers
+the entities of its `domains` in a searchable list. The app sends the chosen one with the tile's data under `entities`
+and the option's id, with its state, its name, the named attributes and `updated`, and sends the tile again when it
+changes ([FIRMWARE_API.md](FIRMWARE_API.md), "What `on_state` gets"). Another choice needs no build. A tile of several
+sources (an energy dashboard: the grid, the solar panels, the battery) has one such option for each:
+
+```yaml
+options:
+  - { id: grid, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: grid }
+  - { id: solar, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: solar }
+```
 
 ```yaml
 options:
@@ -428,7 +445,7 @@ most 4. A manifest with `savers` names `api: "0.14"` or later.
 | `icon` | no | From Tessera's icon set; the plugin's icon when left out. |
 | `step` | yes | `clock`, `media` or `photos` for a face of that step, `own` for a step of its own. The C++ registers it with the same step (`SaverStep::CLOCK`, `MEDIA`, `PHOTOS`, `OWN`). |
 | `memory` | yes | What the saver costs while it is on the glass, a whole number of bytes from 64 to 16384, as a tile's `memory`: about 100 a label, 80 a block. |
-| `pictures` | no | Places for pictures, 0 to 8 (default 0): how many the saver makes at most with `ui::picture`. The address `saver:picture` is the step's own picture (the cover of the music, the photo of the photos), for a face of `media` or `photos`; any other address is on a host of `permissions.network`, or Home Assistant's own picture of a step of its own's entity. |
+| `pictures` | no | Places for pictures, 0 to 8 (default 0): how many the saver makes at most with `ui::picture`. The address `step:` is the step's own picture (the cover of the music, the photo of the photos), for a face of `media` or `photos`; any other address is on a host of `permissions.network`, or Home Assistant's own picture of a step of its own's entity. |
 | `taps` | no | `true` when the saver has parts made with `ui::takes_taps`, which a finger taps without waking the screen (default `false`): keys of a player, a switch. Say it whenever the code calls `ui::takes_taps`. |
 | `moves` | no | `true` when the saver moves itself so nothing stands on the same pixels for hours (a clock that turns, a picture that changes every minute); the screen then leaves it where it draws. Default `false`: the screen moves the whole saver up to a millimetre every minute. |
 | `backdrop` | no | (0.14) `true` for a face of the music or the photos that draws over the step's own picture: the screen shows the cover or the photo over the whole glass under the saver, the photo moving slowly when the person chose Motion: Slow, and the saver's glass is clear. Only for `step: media` or `photos`. |
@@ -609,6 +626,7 @@ These are the fields whose minor the core records:
 | 0.12 | An option's `multiple` and `search`, a fetch's `each`, `{name\|,}` and `{search}` in a URL, a field `{ each: value }` |
 | 0.13 | A card's `pictures` |
 | 0.14 | `savers`, with every field of a saver |
+| 0.15 | An option of kind `entity` in a tile's `options`, with `domains` and `attributes` |
 
 What each minor brought to the C++ is in [FIRMWARE_API.md](FIRMWARE_API.md), "Versions".
 

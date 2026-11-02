@@ -2,7 +2,7 @@
 
 > Plugins for Tessera, the ESP32 touch screens for Home Assistant. A plugin is an ESPHome component (C++) built into a
 > screen's firmware plus a manifest the Tessera app reads; the app fetches web data for it. It adds tiles, cards, top bar
-> items, tap actions, settings rows and (0.14) screensavers. The plugin API is 0.14 now (on Tessera's dev; the release has an older one until the next);
+> items, tap actions, settings rows, (0.14) screensavers and (0.18) popups. The plugin API is 0.24 now (on Tessera's dev; the release has an older one until the next);
 > a plugin builds on the same major from its own minor up, unless a listed minor after it changed a name (only 0.4).
 > Home Assistant is the backend: no plugin code runs in the app.
 
@@ -12,7 +12,7 @@ Start with AGENTS.md (rules for AI assistants), then docs/MAKING_A_PLUGIN.md.
 - [AGENTS.md](AGENTS.md): rules, the reading order, what "done" means
 - [docs/MAKING_A_PLUGIN.md](docs/MAKING_A_PLUGIN.md): files, steps, the changelog (CHANGELOG.md, a heading per version, shown with an update), how the pieces meet, common mistakes
 - [docs/MANIFEST.md](docs/MANIFEST.md): every field of tessera-plugin.yaml as the check reads it (required fields, types, allowed values, defaults, limits), savers with an example of each kind, a real example, which minor brought a field
-- [docs/FIRMWARE_API.md](docs/FIRMWARE_API.md): tessera::Plugin, tessera::Tile, cards, pictures, screensavers (tessera::Saver, the contract of each step, ui::takes_taps, tessera::wish, what a saver cannot do), drawing helpers, sounds, rules, versions (which plugin fits which core, what each minor brought)
+- [docs/FIRMWARE_API.md](docs/FIRMWARE_API.md): tessera::Plugin, tessera::Tile, cards, pictures, screensavers (tessera::Saver, the contract of each step, ui::takes_taps, tessera::wish, what a saver cannot do), popups (tessera::Popup, show_popup, the close key, ui::animate), drawing helpers, sounds, rules, versions (which plugin fits which core, what each minor brought)
 - [docs/FETCH.md](docs/FETCH.md): data from a web service, the map language
 - [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md): screen and app texts, plurals
 - [docs/PREVIEW.md](docs/PREVIEW.md): the bench, tools/preview.py: every tile at every size, cards, top bar, screensavers and settings on every kind of screen (boards, a glass of your own, grids), light and dark, on the real firmware built for your computer, with a check of what it draws; preview.yaml gives the data
@@ -25,14 +25,14 @@ Start with AGENTS.md (rules for AI assistants), then docs/MAKING_A_PLUGIN.md.
 - [template/](template): the smallest complete plugin, a countdown tile without data
 - [plugins/ov_departures/](plugins/ov_departures): a tile with fetched data, a list of choices and a countdown
 - [plugins/waste_collection/](plugins/waste_collection): a tile of an entity, a card, a tap action, a top bar item, settings
-- [plugins/voice_assist/](plugins/voice_assist): ESPHome's voice components on the features microphone, speaker and media player, sounds, a tile and a top bar item in colour
+- [plugins/voice_assist/](plugins/voice_assist): ESPHome's voice components on the features microphone, speaker and media player, sounds, a tile and a top bar item in colour, a popup (0.18) with rings that ripple and an arc that turns, words that come at the pace of speech
 - [plugins/screen_camera/](plugins/screen_camera): a board's camera through the board-only feature camera_sensor, with a driver of its own
 - [plugins/tap_sound/](plugins/tap_sound): the smallest plugin with sounds: a tick as a finger lands (on_press), a softer one per step of a value under the finger (on_step), a firmer one at its end
 - [plugins/picture_frame/](plugins/picture_frame): the smallest plugin with pictures on a tile: an entity's own picture or one at an address, cover or contain
 - [plugins/cinema/](plugins/cinema): a cover flow of film posters from a fetch with a secret key, places that overlap, turn and mirror
 - [plugins/new_music/](plugins/new_music): a cover flow of releases from a fetch per picked artist (each, search), a card with a picture, a tap that plays through Music Assistant (action with fields)
 - [plugins/flip_clock/](plugins/flip_clock): the smallest screensaver, a face of the clock: two flip cards that paint only what changed, every board
-- [plugins/vinyl_deck/](plugins/vinyl_deck): a face of the music: the cover by saver:picture, keys with ui::takes_taps, play and mute with tessera::wish, the volume with an action
+- [plugins/vinyl_deck/](plugins/vinyl_deck): a face of the music: the cover by step:, keys with ui::takes_taps, play and mute with tessera::wish, the volume with an action
 - [plugins/photo_clock/](plugins/photo_clock): a face of the photos: the photo over the whole glass, the time in a corner, moved by the screen
 
 ## Tools

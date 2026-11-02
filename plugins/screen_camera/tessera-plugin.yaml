@@ -1,10 +1,10 @@
 # Screen camera: the screen's own camera as a camera in Home Assistant. The picture is made on the screen in hardware
-# (the ESP32-P4's image processor and JPEG encoder, ESPHome's camera API), only when Home Assistant asks for one; a
-# camera in the top bar shows while it does. It drives the board's camera sensor (the feature camera_sensor: the
+# (the ESP32-P4's image processor and JPEG encoder, ESPHome's camera API), only when Home Assistant asks for one; the
+# core's dot shows while it does (plugin API 0.17). It drives the board's camera sensor (the feature camera_sensor: the
 # board powers it and names its I2C bus), and brings the camera as `ts_camera` for a plugin that builds on it.
 id: screen_camera
-version: 0.2.0
-api: "0.8"
+version: 0.6.15
+api: "0.23"
 icon: cctv
 maintainer: MaxGramser
 license: GPL-3.0-only
@@ -16,7 +16,17 @@ requires:
   features: [camera_sensor]
 provides: [camera]
 boards: any
-flash_kb: 300
+flash_kb: 310
 
-bar_items:
-  - { id: watching, label: bar_watching, icon: cctv, example: bar_example }
+settings:
+  - { key: camera_light_level_and_motion, label: setting_sensing, hint: setting_sensing_hint }
+  - { key: camera_motion_wakes_the_screen, label: setting_wake, hint: setting_wake_hint }
+  - { key: camera_motion_timeout, label: setting_time_out, hint: setting_time_out_hint }
+  - { key: camera_upside_down, label: setting_upside_down, hint: setting_upside_down_hint }
+  - { key: camera_field_of_view, label: setting_field_of_view, hint: setting_field_of_view_hint }
+
+# The camera as live video with sound in Home Assistant (README.md, "Video"): H.264 from the P4's encoder and Opus from
+# the microphone, on the screen's own device through the tessera_video integration Tessera installs. On when the plugin
+# is added; the camera then runs from boot.
+parts:
+  - { id: video, file: parts/video.yaml, label: part_video, hint: part_video_hint, flash_kb: 250, features: [microphone], default: true }

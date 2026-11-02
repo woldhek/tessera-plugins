@@ -1,7 +1,7 @@
 # Vinyl deck: a face of the screensaver's music (plugin API 0.14, docs/FIRMWARE_API.md "A screensaver"). The cover of
 # what plays as a record sleeve with the record peeking out of it, the title and the artist beside it, and keys that
 # play, pause and change the volume while the screen stays in standby. An example of a saver's picture (the address
-# saver:picture), its taps (ui::takes_taps) and wish(). docs/MANIFEST.md has every field.
+# step:), its taps (ui::takes_taps) and wish(). docs/MANIFEST.md has every field.
 id: vinyl_deck
 version: 0.1.0
 api: "0.14"
@@ -30,7 +30,7 @@ savers:
     step: media
     # Twelve LVGL objects (the record, the sleeve, two lines of words, three keys with their icons) and the player's id.
     memory: 1500
-    # One place: the sleeve, which shows the step's own picture, the cover (saver:picture).
+    # One place: the sleeve, which shows the step's own picture, the cover (step:).
     pictures: 1
     # Its keys take a tap without waking the screen.
     taps: true

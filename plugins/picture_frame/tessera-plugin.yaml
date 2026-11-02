@@ -2,8 +2,8 @@
 # plays) or a picture at an address you give it. The smallest plugin with pictures on a tile (plugin API 0.10,
 # docs/FIRMWARE_API.md "Pictures on a tile"): a place, an address, cover or contain, the name over it.
 id: picture_frame
-version: 0.1.0
-api: "0.10"
+version: 0.2.0
+api: "0.17"
 icon: image
 maintainer: MaxGramser
 license: MIT
@@ -28,9 +28,8 @@ tiles:
     memory: 500
     # One place for one picture (plugin API 0.10).
     pictures: 1
-    # The entity whose picture it shows when no address is given: a person, an image entity, a media player.
-    domains: [person, image, media_player]
-    attributes: [entity_picture]
+    # The entity whose picture it shows when no address is given: a person, a camera, an image entity, a media player.
+    domains: [person, camera, image, media_player]
     example: tile_example
     preview: { title: "{name}" }
     options:
@@ -38,3 +37,4 @@ tiles:
       - { id: fit, kind: choice, label: fit, hint: fit_hint, default: cover,
           choices: [{ value: cover, label: fit_cover }, { value: contain, label: fit_contain }] }
       - { id: caption, kind: toggle, label: caption, hint: caption_hint, default: true }
+      - { id: live, kind: toggle, label: live, hint: live_hint, default: true }

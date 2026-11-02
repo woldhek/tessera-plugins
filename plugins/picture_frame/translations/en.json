@@ -5,7 +5,7 @@
   },
   "app": {
     "name": "Picture frame",
-    "summary": "A picture on a tile: a person's photo, an image entity, what plays, or any picture at an address.",
+    "summary": "A picture on a tile: a person's photo, a camera, an image entity, what plays, or any picture at an address.",
     "tile_name": "Picture",
     "tile_example": "A photo in a frame",
     "url": "Address",
@@ -15,6 +15,8 @@
     "fit_cover": "Cover",
     "fit_contain": "Contain",
     "caption": "Name over the picture",
-    "caption_hint": "The tile's name in the corner of the picture."
+    "caption_hint": "The tile's name in the corner of the picture.",
+    "live": "Live camera",
+    "live_hint": "A camera moves on screens that stream (the ESP32-P4 boards) and shows its pictures elsewhere. The name is not drawn over a live camera."
   }
 }
