@@ -17,6 +17,8 @@
     "tile_example": "Boodschappen, loodgieter bellen",
     "show_completed": "Afgeronde taken tonen",
     "show_completed_hint": "Afgeronde taken blijven onderaan op de tegel staan tot je ze in Home Assistant opruimt.",
-    "card_name": "Hele lijst"
+    "card_name": "Hele lijst",
+    "tick_off": "Taken afvinken",
+    "tick_off_hint": "Uit: de lijst is alleen om te lezen, en een tik waar dan ook opent de hele lijst."
   }
 }

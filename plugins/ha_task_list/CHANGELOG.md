@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0
+- New tile option: Tasks can be ticked off (on by default). Turn it off for a list that is only to read: a tap then
+  opens the whole list, and the card does not tick tasks either.
 ## 0.2.1
 - The tile takes half the memory it did (2.9 KB instead of 6 KB of the screen's room for tiles): fewer parts per row,
   at most eight rows, spread out over a tall tile.

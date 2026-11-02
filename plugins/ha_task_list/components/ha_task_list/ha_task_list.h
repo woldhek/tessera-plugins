@@ -91,7 +91,7 @@ class TaskTile : public tessera::Tile {
   tessera::Text entity_, name_, list_name_;
   lv_obj_t *note_{nullptr}, *more_{nullptr};
   int width_{0}, height_{0}, tile_{-1};
-  bool show_completed_{false}, loaded_{false}, failed_{false};
+  bool show_completed_{false}, tick_off_{true}, loaded_{false}, failed_{false};
   uint32_t asked_{0}, asked_at_{0}, ask_at_{0};
 };
 
@@ -121,7 +121,7 @@ class ListCard : public tessera::Card {
   tessera::List<uint8_t> starts_;  // the first task of each page
   lv_obj_t *note_{nullptr}, *prev_{nullptr}, *next_{nullptr}, *page_{nullptr}, *rule_{nullptr};
   int width_{0}, height_{0}, foot_{0}, page_index_{0};
-  bool loaded_{false}, failed_{false};
+  bool tick_off_{true}, loaded_{false}, failed_{false};
   uint32_t asked_{0}, asked_at_{0}, ask_at_{0};
 };
 
@@ -135,8 +135,18 @@ class HaTaskList : public Component, public tessera::Plugin {
   void remove(TaskTile *tile);
   ListCard *card_{nullptr};  // the card that is open, to hand it its answer
 
+  // Whether a finger may tick tasks off, per tile of the layout (its option tick_off): the card a tile opens gets no
+  // options of its own, so the tile leaves its choice here, by the tile's index in the layout.
+  void set_tick_off(int tile, bool on);
+  bool tick_off(int tile) const;
+
  private:
   tessera::List<TaskTile *> tiles_;
+  struct TickOff {
+    int tile;
+    bool on;
+  };
+  tessera::List<TickOff> tick_off_;
 };
 
 }  // namespace esphome::ha_task_list
