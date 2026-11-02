@@ -316,6 +316,8 @@ void TaskTile::create(const tessera::TileContext &c) {
   entity_ = roomy::text(std::string(c.entity ? c.entity : ""));
   name_ = roomy::text(std::string(c.name ? c.name : ""));
   show_completed_ = c.options["show_completed"] | false;
+  tick_off_ = c.options["tick_off"] | true;
+  plugin_->set_tick_off(tile_, tick_off_);
 
   const Font title = ui::large() ? Font::BODY_LARGE : Font::BODY;
   // As many rows of one line as fit, up to TILE_SLOTS: what the manifest's memory counts.
@@ -387,7 +389,9 @@ void TaskTile::layout() {
 
 void TaskTile::on_tap() {
   const auto p = tessera::tap_point();
-  const int index = p.y >= 0 ? rows_.task_at(p.y) : -1;
+  // A tap on a task ticks it off or on, unless the tile's option says the list is only to read: then every tap opens
+  // the whole list.
+  const int index = tick_off_ && p.y >= 0 ? rows_.task_at(p.y) : -1;
   if (index >= 0 && index < static_cast<int>(tasks_.size())) {
     toggle(entity_, tasks_[index]);
     layout();
@@ -424,6 +428,7 @@ void ListCard::open(const tessera::CardContext &c) {
   height_ = c.height;
   entity_ = roomy::text(std::string(c.entity ? c.entity : ""));
   plugin_->card_ = this;
+  tick_off_ = plugin_->tick_off(c.tile);
 
   const Font title = Font::BODY_LARGE;
   foot_ = std::max(ui::mm(10), ui::line_height(Font::BODY) + 2 * pad());
@@ -520,7 +525,7 @@ void ListCard::on_tap() {
     layout();
     return;
   }
-  const int index = rows_.task_at(p.y);
+  const int index = tick_off_ ? rows_.task_at(p.y) : -1;
   if (index < 0 || index >= static_cast<int>(tasks_.size())) return;
   toggle(entity_, tasks_[index]);
   rows_.show(tasks_, starts_.empty() ? 0 : starts_[page_index_], height_ - foot_);  // in place: nothing moves yet
@@ -548,6 +553,23 @@ void HaTaskList::setup() {
 }
 
 void HaTaskList::add(TaskTile *tile) { tiles_.push_back(tile); }
+
+void HaTaskList::set_tick_off(int tile, bool on) {
+  for (auto &t : tick_off_)
+    if (t.tile == tile) {
+      t.on = on;
+      return;
+    }
+  tick_off_.push_back({tile, on});
+}
+
+// A card opened some other way than from a tile of this plugin (no index, or one never seen) lets tasks be ticked off,
+// as the option's default does.
+bool HaTaskList::tick_off(int tile) const {
+  for (const auto &t : tick_off_)
+    if (t.tile == tile) return t.on;
+  return true;
+}
 
 void HaTaskList::remove(TaskTile *tile) {
   tiles_.erase(std::remove(tiles_.begin(), tiles_.end(), tile), tiles_.end());
