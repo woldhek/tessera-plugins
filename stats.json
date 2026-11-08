@@ -3,93 +3,99 @@
  "plugins": {
   "bt_proxy": {
    "likes": 0,
-   "rating": null,
-   "ratings": 1,
-   "homes": 2
+   "rating": 5,
+   "ratings": 5,
+   "homes": 8
   },
   "buienradar": {
-   "likes": 1,
+   "likes": 2,
    "rating": 4.3,
-   "ratings": 3,
-   "homes": 4
+   "ratings": 7,
+   "homes": 9
   },
   "cinema": {
    "likes": 2,
    "rating": null,
-   "ratings": 0,
-   "homes": 0
+   "ratings": 2,
+   "homes": 2
   },
   "custom_card": {
-   "likes": 9,
-   "rating": 3.7,
-   "ratings": 3,
-   "homes": 9
+   "likes": 17,
+   "rating": 4.5,
+   "ratings": 22,
+   "homes": 28
   },
   "dwd_rain": {
-   "likes": 0,
-   "rating": null,
-   "ratings": 0,
-   "homes": 1
+   "likes": 1,
+   "rating": 3.6,
+   "ratings": 5,
+   "homes": 4
   },
   "electricity_price": {
+   "likes": 2,
+   "rating": 4.3,
+   "ratings": 6,
+   "homes": 6
+  },
+  "energidata_price": {
    "likes": 1,
    "rating": null,
    "ratings": 2,
-   "homes": 1
-  },
-  "energidata_price": {
-   "likes": 0,
-   "rating": null,
-   "ratings": 1,
-   "homes": 0
+   "homes": 3
   },
   "energy_flow": {
-   "likes": 3,
+   "likes": 7,
    "rating": null,
-   "ratings": 0,
-   "homes": 2
+   "ratings": 2,
+   "homes": 6
   },
   "flip_clock": {
-   "likes": 4,
-   "rating": 2.3,
-   "ratings": 3,
-   "homes": 11
+   "likes": 11,
+   "rating": 4.1,
+   "ratings": 26,
+   "homes": 34
   },
   "guition_relays": {
-   "likes": 0,
-   "rating": null,
-   "ratings": 1,
-   "homes": 4
+   "likes": 1,
+   "rating": 5,
+   "ratings": 9,
+   "homes": 10
   },
   "new_music": {
-   "likes": 3,
-   "rating": null,
-   "ratings": 0,
-   "homes": 5
+   "likes": 4,
+   "rating": 4.7,
+   "ratings": 3,
+   "homes": 12
   },
   "ov_departures": {
    "likes": 3,
    "rating": null,
    "ratings": 1,
-   "homes": 0
+   "homes": 1
   },
   "photo_clock": {
    "likes": 2,
    "rating": null,
-   "ratings": 0,
-   "homes": 2
+   "ratings": 2,
+   "homes": 10
   },
   "photo_slideshow": {
    "likes": 3,
    "rating": null,
-   "ratings": 0,
-   "homes": 1
+   "ratings": 1,
+   "homes": 6
   },
   "picture_frame": {
+   "likes": 2,
+   "rating": 3.7,
+   "ratings": 3,
+   "homes": 12
+  },
+  "pollen": {
    "likes": 1,
    "rating": null,
-   "ratings": 0,
-   "homes": 5
+   "ratings": 1,
+   "homes": 1
   },
   "scmt": {
    "likes": 0,
@@ -98,82 +104,100 @@
    "homes": 2
   },
   "screen_camera": {
-   "likes": 1,
-   "rating": null,
-   "ratings": 1,
-   "homes": 3
+   "likes": 2,
+   "rating": 4.4,
+   "ratings": 7,
+   "homes": 16
   },
   "status_tile": {
-   "likes": 0,
-   "rating": null,
-   "ratings": 0,
-   "homes": 1
-  },
-  "tankerkoenig": {
    "likes": 1,
+   "rating": 4.4,
+   "ratings": 10,
+   "homes": 14
+  },
+  "sweden_public_transport": {
+   "likes": 0,
    "rating": null,
    "ratings": 1,
    "homes": 0
   },
+  "tankerkoenig": {
+   "likes": 2,
+   "rating": 3.3,
+   "ratings": 3,
+   "homes": 2
+  },
   "tap_sound": {
-   "likes": 1,
-   "rating": null,
-   "ratings": 1,
-   "homes": 4
+   "likes": 2,
+   "rating": 4.6,
+   "ratings": 5,
+   "homes": 9
   },
   "thermo_dial": {
    "likes": 2,
+   "rating": 4.5,
+   "ratings": 4,
+   "homes": 12
+  },
+  "timers": {
+   "likes": 0,
+   "rating": 5,
+   "ratings": 5,
+   "homes": 12
+  },
+  "toothbrush": {
+   "likes": 1,
    "rating": null,
    "ratings": 2,
    "homes": 3
   },
-  "timers": {
-   "likes": 0,
-   "rating": null,
-   "ratings": 1,
-   "homes": 2
-  },
   "vinyl_deck": {
    "likes": 1,
    "rating": null,
-   "ratings": 0,
-   "homes": 1
+   "ratings": 2,
+   "homes": 7
   },
   "voice_assist": {
+   "likes": 11,
+   "rating": 4.7,
+   "ratings": 15,
+   "homes": 17
+  },
+  "waste_collection": {
+   "likes": 9,
+   "rating": 4.7,
+   "ratings": 13,
+   "homes": 17
+  },
+  "waste_overview": {
    "likes": 4,
+   "rating": 3.5,
+   "ratings": 6,
+   "homes": 6
+  },
+  "waze_traveltime": {
+   "likes": 3,
    "rating": 4.3,
+   "ratings": 3,
+   "homes": 4
+  },
+  "weather_warnings": {
+   "likes": 1,
+   "rating": 4,
+   "ratings": 3,
+   "homes": 3
+  },
+  "wifi_qr": {
+   "likes": 4,
+   "rating": 4,
    "ratings": 4,
    "homes": 5
   },
-  "waste_collection": {
-   "likes": 6,
-   "rating": null,
-   "ratings": 1,
-   "homes": 2
-  },
-  "waste_overview": {
-   "likes": 1,
-   "rating": null,
-   "ratings": 1,
-   "homes": 2
-  },
-  "waze_traveltime": {
-   "likes": 2,
-   "rating": null,
-   "ratings": 0,
-   "homes": 0
-  },
-  "wifi_qr": {
-   "likes": 2,
-   "rating": null,
-   "ratings": 0,
-   "homes": 0
-  },
   "world_clock": {
    "likes": 2,
-   "rating": null,
-   "ratings": 0,
-   "homes": 3
+   "rating": 4.8,
+   "ratings": 6,
+   "homes": 9
   }
  }
 }
