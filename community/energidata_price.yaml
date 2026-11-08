@@ -1,0 +1,3 @@
+repo: https://github.com/Andware/tessera-energidata-price
+path: .                  # the folder with tessera-plugin.yaml
+maintainer: Andware

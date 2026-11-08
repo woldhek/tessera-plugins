@@ -117,9 +117,10 @@ void ScreenVideo::loop() {
 #ifdef USE_SCREEN_VIDEO_SOUND
   const uint32_t packets = sound_packets_.load(), opus_us = opus_us_.load();
   if (packets != reported_sound_)
-    ESP_LOGI(TAG, "Sound: %u packets of 20 ms, %.1f ms encoding a packet, %u bytes lost since boot",
+    ESP_LOGI(TAG, "Sound: %u packets of 20 ms, %.1f ms encoding a packet, %u bytes lost since boot, %u packets left behind "
+             "for a full connection",
              (unsigned) (packets - reported_sound_), (opus_us - reported_opus_us_) / 1000.0f / (packets - reported_sound_),
-             (unsigned) sound_lost_.load());
+             (unsigned) sound_lost_.load(), (unsigned) sound_behind_.load());
   reported_sound_ = packets;
   reported_opus_us_ = opus_us;
 #endif

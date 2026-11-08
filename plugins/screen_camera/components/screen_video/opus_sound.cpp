@@ -1,6 +1,9 @@
 // The video's sound: the microphone as Opus at 20 ms a frame, on the server's task, with its own clock against
 // the camera's (RTCP in rtsp_server.cpp). Only in a build with a microphone.
 #include "screen_video.h"
+
+#include <cerrno>
+#include <lwip/sockets.h>
 #ifdef USE_SCREEN_VIDEO_SOUND
 #include "screen_video_shared.h"
 
@@ -98,11 +101,30 @@ void ScreenVideo::send_sound_() {
     memcpy(hd + 12, opus_out_, out.encoded_bytes);
     for (auto &v : viewers_) {
       if (v.fd < 0 || !v.playing || v.sound_channel < 0) continue;
+      // A sound packet never waits for the Wi-Fi: send() with its two seconds (SO_SNDTIMEO) held the whole loop, every
+      // viewer's pictures and sound, which then came in one burst (a reTerminal D1001 streaming to a Guition 10.1 while
+      // it showed the 10.1 full screen, 2026-10-29: sound 0.8 s behind on average, 2.4 s at most). Nor does it wait for
+      // select's "writable" (0.6.14), which lwIP gives only with half the send buffer free: a fifth of a second of video
+      // in flight, normal on Wi-Fi, and a packet of a few hundred bytes still fits; waiting for that cut 20 ms of sound
+      // out one to three times a second. It goes without waiting (MSG_DONTWAIT); what the connection takes no part of
+      // is left out and counted, what it takes part of goes first next time (sound_unsent, unsent_first_).
+      if (!unsent_first_(v)) {
+        if (v.fd >= 0) sound_behind_++;
+        continue;
+      }
       packet[1] = static_cast<uint8_t>(v.sound_channel);
       hd[2] = v.sound_seq >> 8;
       hd[3] = v.sound_seq & 0xFF;
       ++v.sound_seq;
-      if (!send_all_(v.fd, packet, 4 + rtp_len)) drop_(v);
+      const int n = send(v.fd, packet, 4 + rtp_len, MSG_DONTWAIT);
+      if (n == static_cast<int>(4 + rtp_len)) continue;
+      if (n > 0) {
+        v.sound_unsent.assign(reinterpret_cast<const char *>(packet) + n, 4 + rtp_len - n);
+      } else if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        sound_behind_++;
+      } else {
+        drop_(v);
+      }
     }
     sound_packets_++;
     sound_octets_ += out.encoded_bytes;

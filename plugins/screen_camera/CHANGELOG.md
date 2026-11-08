@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.15 - 2026-10-29
+- **A sound packet goes whenever the connection has room for it.** 0.6.14 held it back whenever the connection was not
+  "writable", which lwIP says only with half of the send buffer free: a fifth of a second of video in flight, normal
+  on Wi-Fi, so one to three packets of 20 ms a second were left out and the sound broke into snippets (heard on both
+  a reTerminal D1001 and a Guition 10.1 hearing each other). It is now sent without waiting; only a packet the
+  connection takes no part of is left out, and a part it did take goes first next time, so the stream stays whole.
+
+## 0.6.14 - 2026-10-29
+- **A viewer whose connection is full misses a moment of sound instead of holding everyone up.** The video already left
+  such a viewer's pictures behind until a key frame found room (0.6.10); its sound packets still went into send(), which
+  waited for the Wi-Fi up to two seconds and held the whole sender with it: every viewer's pictures and sound stopped,
+  then came in one burst. Heard as chopped, doubled words on a reTerminal D1001 streaming to a Guition 10.1 while it
+  showed the 10.1 full screen (the add-on: sound 0.8 s behind on average, 2.4 s at most). The report counts the packets
+  left behind.
+
 ## 0.6.13 - 2026-10-29
 - **The video's quantiser is capped at 42 again.** 0.6.11 let the encoder use H.264's whole range to stay near its
   1 Mbit/s in a busy picture. Measured, it already does at 42: on a Guition 10.1 with fresh noise over half of every

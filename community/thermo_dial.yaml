@@ -1,0 +1,3 @@
+repo: https://github.com/alexcoscia/tessera-thermo-dial
+path: .                  # the folder with tessera-plugin.yaml
+maintainer: alexcoscia

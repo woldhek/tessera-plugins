@@ -10,8 +10,7 @@ The header lives in the Tessera repository at `components/smart_display/plugin_a
 page explains it. Everything is in namespace `tessera`.
 
 A manifest names the plugin API it was written for: `api: "0.8"`, or `"0.9"` up to `"0.24"` for the parts those
-brought; the plugin API 0.24 is the one the core offers now (on Tessera's dev branch; the release has an older one until
-the next). Which cores a plugin builds on is under "Versions" at the end of this page.
+brought; the plugin API 0.24 is the one the core offers now (since Tessera 0.4.91). Which cores a plugin builds on is under "Versions" at the end of this page.
 
 A plugin adds to the screen in a few kinds of parts: tiles on a page, cards over the page, tap actions for Tessera's own
 tiles, items in the top bar, rows on the settings page, (0.14) screensavers, which the screen shows over the whole
@@ -766,7 +765,7 @@ number. Before 0.9 a block has no colour by meaning: `TRACK` and `ACCENT`, or th
 | `tessera::days_from_today(epoch)` | 0 today, 1 tomorrow, -1 yesterday, on the screen's calendar. `INT32_MIN` while the clock is not set. |
 | `tessera::date_text(epoch)` | A day as the top bar writes it: "Fri 9 Oct", "vr 9 okt". |
 | `tessera::days_text(days)` | "Tomorrow", "In 3 days" in the screen's language; `""` for today (bring your own word) and the past. |
-| `tessera::action(service, entity, key, value)` | A Home Assistant action on an entity (see "A tile of an entity"). |
+| `tessera::action(service, entity, fields)` | A Home Assistant action on an entity, its fields a JSON object or none (see "A tile of an entity"). |
 | `tessera::action(service, entity, fields)` | The same with a JSON object of fields of any type (0.12, "Actions"). |
 | `tessera::wish(entity, field, value)` | A value a finger changed (0.14): it shows at once and Home Assistant squares it ("A screensaver", "Values a finger changes"). |
 | `tessera::open_card(plugin_id, card, entity, tile, title)`, `close_card()` | Open or close a card. |
@@ -868,7 +867,7 @@ readout by it, so the pictures, a video and whatever reads the frames all stand 
 
 ## Versions
 
-A manifest names the plugin API it was written for: `api: "0.8"` up to `"0.24"`; the plugin API 0.24 is the one the core offers now (on Tessera's dev branch; the release has an older one until the next). When a
+A manifest names the plugin API it was written for: `api: "0.8"` up to `"0.24"`; the plugin API 0.24 is the one the core offers now (since Tessera 0.4.91). When a
 screen is built, `smart_display.register_plugin()` compares it with the core's and stops the build with one sentence
 when it does not fit. A plugin fits a core when all three hold:
 
@@ -925,7 +924,7 @@ brought:
 | 0.21 | `tessera::squeeze(Work)`: the screen's governor asks a plugin to give up half or three quarters of its video, its sensing or its background work while a finger is on the glass or the screen shows signs of trouble. |
 | 0.22 | `tessera::offer_own_frames`, `own_tile_wants`, `own_frame`: the screen's own camera drawn on a live tile of its own from the camera's frames, with no encoder, app or network between. |
 | 0.23 | `Capture::SOUND` for `tessera::capturing`: someone hears what the screen's microphone hears (its video with sound, a call); the screen keeps its live tiles at a quarter while it lasts, so a conversation goes before the tiles on the sending side too. |
-| 0.24 | One form for each thing; taken away, each beside a newer form: `on_touch` (use `on_press`), `tessera::action(service, entity, key, value)` (use `tessera::action(service, entity, fields)`, or no fields), the address `saver:picture` (use `step:`) and a tile's `memory: { bytes: n }` (write the number). `ui::picture` and `ui::set_picture` are one signature each, with defaults. |
+| 0.24 | One form for each thing; taken away, each beside a newer form: `on_touch` (use `on_press`), `tessera::action(service, entity, key, value)` (use `tessera::action(service, entity, fields)`, or no fields; `tools/check.py` refuses the old form and `on_touch`), the address `saver:picture` (use `step:`) and a tile's `memory: { bytes: n }` (write the number). `ui::picture` and `ui::set_picture` are one signature each, with defaults. |
 
 A minor of the app's or the manifest's side only still counts: a plugin that uses what it brought needs an app that
 knows it ([MANIFEST.md](MANIFEST.md), "Which minor brought a field").

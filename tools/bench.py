@@ -686,7 +686,8 @@ class Bench(run.Run):
             return
         self.read.add((entity, attribute))
         known = self.states.get(entity)
-        value = None if not known else known['state'] if attribute is None else known['attributes'].get(attribute)
+        # The API sends "" for a sensor of the entity's state, not None: both are the state.
+        value = None if not known else known['state'] if not attribute else known['attributes'].get(attribute)
         if value is None:
             self.find('info', 'Home Assistant', f'the screen reads {entity}{" " + attribute if attribute else ""}; '
                       'preview.yaml has no such state, so it stays empty')

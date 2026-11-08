@@ -79,6 +79,9 @@ class TaskTile : public tessera::Tile {
 
   void answer(JsonObjectConst message);
   uint32_t asked() const { return asked_; }
+  const tessera::Text &entity() const { return entity_; }
+  // A popup's yes ticked `uid` off (done) or on: show it at once, and ask again soon.
+  void ticked(const char *uid, const char *text, bool done);
 
  private:
   void ask();
@@ -91,7 +94,7 @@ class TaskTile : public tessera::Tile {
   tessera::Text entity_, name_, list_name_;
   lv_obj_t *note_{nullptr}, *more_{nullptr};
   int width_{0}, height_{0}, tile_{-1};
-  bool show_completed_{false}, tick_off_{true}, loaded_{false}, failed_{false};
+  bool show_completed_{false}, tick_off_{true}, confirm_{false}, loaded_{false}, failed_{false};
   uint32_t asked_{0}, asked_at_{0}, ask_at_{0};
 };
 
@@ -108,6 +111,8 @@ class ListCard : public tessera::Card {
 
   void answer(JsonObjectConst message);
   uint32_t asked() const { return asked_; }
+  const tessera::Text &entity() const { return entity_; }
+  void ticked(const char *uid, const char *text, bool done);
 
  private:
   void ask();
@@ -121,8 +126,25 @@ class ListCard : public tessera::Card {
   tessera::List<uint8_t> starts_;  // the first task of each page
   lv_obj_t *note_{nullptr}, *prev_{nullptr}, *next_{nullptr}, *page_{nullptr}, *rule_{nullptr};
   int width_{0}, height_{0}, foot_{0}, page_index_{0};
-  bool tick_off_{true}, loaded_{false}, failed_{false};
+  bool tick_off_{true}, confirm_{false}, loaded_{false}, failed_{false};
   uint32_t asked_{0}, asked_at_{0}, ask_at_{0};
+};
+
+// The popup that asks before a task is ticked off or on (the tile's option confirm): the question, the task's name, and
+// two keys, No and Yes. Its close key and a tap beside it say no as well.
+class ConfirmTick : public tessera::Popup {
+ public:
+  ConfirmTick(HaTaskList *plugin, const std::string &entity, const TaskItem &task);
+  void open(const tessera::PopupContext &c) override;
+  void on_tap() override;
+  void on_theme() override;
+
+ private:
+  HaTaskList *plugin_;
+  tessera::Text entity_;
+  TaskItem task_;
+  lv_obj_t *question_{}, *name_{}, *no_{}, *no_label_{}, *yes_{}, *yes_label_{};
+  int width_{0}, keys_y_{0}, keys_h_{0}, gap_{0};
 };
 
 class HaTaskList : public Component, public tessera::Plugin {
@@ -135,18 +157,25 @@ class HaTaskList : public Component, public tessera::Plugin {
   void remove(TaskTile *tile);
   ListCard *card_{nullptr};  // the card that is open, to hand it its answer
 
-  // Whether a finger may tick tasks off, per tile of the layout (its option tick_off): the card a tile opens gets no
-  // options of its own, so the tile leaves its choice here, by the tile's index in the layout.
-  void set_tick_off(int tile, bool on);
+  // Whether a finger may tick tasks off, and whether a popup asks first, per tile of the layout (its options tick_off
+  // and confirm): the card a tile opens gets no options of its own, so the tile leaves its choices here, by the tile's
+  // index in the layout.
+  void set_choices(int tile, bool tick_off, bool confirm);
   bool tick_off(int tile) const;
+  bool confirm(int tile) const;
+
+  // Ask in a popup whether to tick `task` of `entity` off (or on again); its yes calls tick().
+  void ask_to_tick(const tessera::Text &entity, const TaskItem &task);
+  // Tick `uid` of `entity` off (done) or on, and show it on every tile and card of that list.
+  void tick(const std::string &entity, const char *uid, const char *text, bool done);
 
  private:
   tessera::List<TaskTile *> tiles_;
-  struct TickOff {
+  struct Choices {
     int tile;
-    bool on;
+    bool tick_off, confirm;
   };
-  tessera::List<TickOff> tick_off_;
+  tessera::List<Choices> choices_;
 };
 
 }  // namespace esphome::ha_task_list

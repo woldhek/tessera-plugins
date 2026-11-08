@@ -78,7 +78,7 @@ The camera is ESPHome's camera with id `ts_camera` (the feature `camera`), so an
 camera driver is `esp_video_camera` (github.com/n-IA-hane/esphome-esp-video-camera, from ESPHome pull request
 esphome/esphome#16944), copied into `components/esp_video_camera` under the ESPHome License, with its NOTICE; Tessera's few changes are marked
 "Tessera" in it. Its empty esp_h264 for a JPEG-only build is a component of its own, `components/esp_h264_placeholder`,
-which the part Video removes, so that ESPHome cleans the build folder and the video's build finds the real encoder.
+which the part Video removes, so that the app starts the video's build from an empty build folder (here, and on a build server) and it finds the real encoder.
 The camera's raw frames go to one consumer of the camera, Screen camera's frame hub (`components/screen_camera/frame_hub.h`),
 which hands each to the light level and motion and to the video while they are on; a consumer reads a frame through
 `frame_reader.h` (`tests/test_frame_reader.cpp` checks it on a PC). The sensors the camera finds by itself, and the

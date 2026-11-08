@@ -59,6 +59,23 @@ bool ScreenVideo::send_all_(int fd, const uint8_t *data, size_t length) {
 // video. Beyond that a picture would wait in send() for the Wi-Fi, and the sound with it: on a reTerminal D1001 whose
 // uplink stalled behind four live tiles the sound reached the app in bursts a second late (2.4 s at most) and the
 // viewing screen cut most of it away (2026-10-29). A picture that finds no room is left behind instead; the sound goes.
+// The rest of a sound packet the connection took only part of goes before anything else (the stream is interleaved: a
+// packet cut in two by another would break it). True when nothing waits any more; false when the connection still has no
+// room for it, which says the connection is truly full.
+bool ScreenVideo::unsent_first_(Viewer &v) {
+  while (!v.sound_unsent.empty()) {
+    const int n = send(v.fd, v.sound_unsent.data(), v.sound_unsent.size(), MSG_DONTWAIT);
+    if (n > 0) {
+      v.sound_unsent.erase(0, static_cast<size_t>(n));
+      continue;
+    }
+    if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) return false;
+    drop_(v);
+    return false;
+  }
+  return true;
+}
+
 bool ScreenVideo::writable_(int fd) {
   fd_set writable;
   FD_ZERO(&writable);
@@ -160,7 +177,7 @@ void ScreenVideo::serve_() {
         const bool idr = has_idr(slot.data, slot.length);
         for (auto &v : viewers_) {
           if (v.fd < 0 || !v.playing) continue;
-          if (!writable_(v.fd)) {
+          if (!unsent_first_(v) || !writable_(v.fd)) {
             if (!v.left_behind) want_idr_ = true;
             v.left_behind = true;
             behind_++;

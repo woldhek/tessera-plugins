@@ -3,7 +3,7 @@
 # core's dot shows while it does (plugin API 0.17). It drives the board's camera sensor (the feature camera_sensor: the
 # board powers it and names its I2C bus), and brings the camera as `ts_camera` for a plugin that builds on it.
 id: screen_camera
-version: 0.6.13
+version: 0.6.15
 api: "0.23"
 icon: cctv
 maintainer: MaxGramser

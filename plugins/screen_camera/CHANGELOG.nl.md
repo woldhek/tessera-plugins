@@ -1,5 +1,21 @@
 # Wijzigingen
 
+## 0.6.15 - 2026-10-29
+- **Een geluidspakket gaat zodra de verbinding er ruimte voor heeft.** 0.6.14 hield het tegen zolang de verbinding niet
+  "writable" was, en dat zegt lwIP pas met de helft van de zendbuffer vrij: een vijfde seconde video onderweg, normaal
+  op Wi-Fi, dus bleven één tot drie pakketten van 20 ms per seconde achter en brak het geluid in snippets (gehoord op
+  een reTerminal D1001 en een Guition 10.1 die elkaar horen). Het wordt nu zonder wachten verstuurd; alleen een pakket
+  waar de verbinding niets van neemt blijft achter, en een deel dat hij wel nam gaat de volgende keer eerst, zodat de
+  stroom heel blijft.
+
+## 0.6.14 - 2026-10-29
+- **Een kijker met een volle verbinding mist even geluid in plaats van iedereen op te houden.** De video liet de beelden
+  van zo'n kijker al achter tot een sleutelframe ruimte vond (0.6.10); zijn geluidspakketten gingen nog in send(), dat
+  tot twee seconden op de Wi-Fi wachtte en de hele zender meenam: beeld en geluid van elke kijker stonden stil en kwamen
+  daarna in een klap. Gehoord als gehakte, dubbele woorden op een reTerminal D1001 die naar een Guition 10.1 streamde
+  terwijl hij de 10.1 full screen toonde (de add-on: geluid 0,8 s achter gemiddeld, 2,4 s max). Het rapport telt de
+  achtergebleven pakketten.
+
 ## 0.6.13 - 2026-10-29
 - **De quantiser van de video staat weer op hoogstens 42.** 0.6.11 liet de encoder het hele bereik van H.264 gebruiken
   om in een druk beeld rond zijn 1 Mbit/s te blijven. Gemeten doet hij dat bij 42 al: op een Guition 10.1 met verse
