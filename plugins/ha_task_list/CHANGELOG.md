@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0
+- New tile option: Ask before ticking off (off by default). A popup with the task's name asks first, on the tile and
+  on the card, so a task is not ticked off (or opened again) by accident.
+- Needs Tessera with plugin API 0.18 or later (the release 0.4.91 has 0.24).
 ## 0.3.0
 - New tile option: Tasks can be ticked off (on by default). Turn it off for a list that is only to read: a tap then
   opens the whole list, and the card does not tick tasks either.

@@ -8,7 +8,12 @@
     "more": "{n} more",
     "today": "Today",
     "overdue": "Overdue",
-    "page": "{page} / {pages}"
+    "page": "{page} / {pages}",
+    "confirm_done": "Tick this off?",
+    "confirm_open": "Mark as not done?",
+    "cancel": "Cancel",
+    "tick": "Tick off",
+    "untick": "Not done"
   },
   "app": {
     "name": "Task List",
@@ -19,6 +24,8 @@
     "show_completed_hint": "Done tasks stay on the tile, at the bottom, until you clear them in Home Assistant.",
     "card_name": "Whole list",
     "tick_off": "Tasks can be ticked off",
-    "tick_off_hint": "Off: the list is only to read, and a tap anywhere opens the whole list."
+    "tick_off_hint": "Off: the list is only to read, and a tap anywhere opens the whole list.",
+    "confirm": "Ask before ticking off",
+    "confirm_hint": "A popup asks first, so a task is not ticked off (or on) by accident."
   }
 }

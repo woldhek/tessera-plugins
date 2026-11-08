@@ -18,6 +18,6 @@ A list shows up to about 25 to 30 tasks: what fits in one answer from Home Assis
 1. Add the plugin to a screen in the Tessera app.
 2. In Layout, place the **Tasks** tile from the plugin library.
 3. In the inspector, choose your to-do list as the tile's entity.
-4. Optionally, turn on **Show completed tasks**, or turn off **Tasks can be ticked off** for a list that is only to
-   read.
+4. Optionally, turn on **Show completed tasks**, turn on **Ask before ticking off** for a popup that asks first, or
+   turn off **Tasks can be ticked off** for a list that is only to read.
 5. Build and install the screen.

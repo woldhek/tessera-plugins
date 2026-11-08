@@ -8,7 +8,12 @@
     "more": "nog {n}",
     "today": "Vandaag",
     "overdue": "Te laat",
-    "page": "{page} / {pages}"
+    "page": "{page} / {pages}",
+    "confirm_done": "Afvinken?",
+    "confirm_open": "Weer open zetten?",
+    "cancel": "Annuleren",
+    "tick": "Afvinken",
+    "untick": "Niet klaar"
   },
   "app": {
     "name": "Takenlijst",
@@ -19,6 +24,8 @@
     "show_completed_hint": "Afgeronde taken blijven onderaan op de tegel staan tot je ze in Home Assistant opruimt.",
     "card_name": "Hele lijst",
     "tick_off": "Taken afvinken",
-    "tick_off_hint": "Uit: de lijst is alleen om te lezen, en een tik waar dan ook opent de hele lijst."
+    "tick_off_hint": "Uit: de lijst is alleen om te lezen, en een tik waar dan ook opent de hele lijst.",
+    "confirm": "Vragen voor afvinken",
+    "confirm_hint": "Een popup vraagt het eerst, zodat je niet per ongeluk een taak afvinkt (of weer opent)."
   }
 }

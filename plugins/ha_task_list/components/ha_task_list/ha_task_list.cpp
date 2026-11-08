@@ -107,15 +107,26 @@ static bool read_items(JsonObjectConst message, const tessera::Text &entity, boo
 
 // Tick or untick a task: it shows at once, and goes back when the action could not be sent. Home Assistant's own
 // answer comes with the next question (AFTER_TAP).
-static void toggle(const tessera::Text &entity, TaskItem &t) {
-  t.completed = !t.completed;
+static bool send_status(const std::string &entity, const char *uid, const char *text, bool done) {
   JsonDocument fields;
-  fields["item"] = t.uid[0] ? t.uid : t.text;
-  fields["status"] = t.completed ? "completed" : "needs_action";
-  if (!tessera::action("todo.update_item", roomy::plain(entity), fields.as<JsonVariantConst>())) {
-    ESP_LOGW(TAG, "todo.update_item on %s was not sent", entity.c_str());
-    t.completed = !t.completed;
+  fields["item"] = uid[0] ? uid : text;
+  fields["status"] = done ? "completed" : "needs_action";
+  if (tessera::action("todo.update_item", entity, fields.as<JsonVariantConst>())) return true;
+  ESP_LOGW(TAG, "todo.update_item on %s was not sent", entity.c_str());
+  return false;
+}
+
+static void toggle(const tessera::Text &entity, TaskItem &t) {
+  if (send_status(roomy::plain(entity), t.uid, t.text, !t.completed)) t.completed = !t.completed;
+}
+
+// The task of `tasks` that is `uid` (or, without one, named `text`), -1 for none.
+static int find(const Tasks &tasks, const char *uid, const char *text) {
+  for (int i = 0; i < static_cast<int>(tasks.size()); ++i) {
+    const TaskItem &t = tasks[i];
+    if (uid[0] ? std::strcmp(t.uid, uid) == 0 : std::strcmp(t.text, text) == 0) return i;
   }
+  return -1;
 }
 
 // ---- Rows ----
@@ -317,7 +328,8 @@ void TaskTile::create(const tessera::TileContext &c) {
   name_ = roomy::text(std::string(c.name ? c.name : ""));
   show_completed_ = c.options["show_completed"] | false;
   tick_off_ = c.options["tick_off"] | true;
-  plugin_->set_tick_off(tile_, tick_off_);
+  confirm_ = c.options["confirm"] | false;
+  plugin_->set_choices(tile_, tick_off_, confirm_);
 
   const Font title = ui::large() ? Font::BODY_LARGE : Font::BODY;
   // As many rows of one line as fit, up to TILE_SLOTS: what the manifest's memory counts.
@@ -393,6 +405,10 @@ void TaskTile::on_tap() {
   // the whole list.
   const int index = tick_off_ && p.y >= 0 ? rows_.task_at(p.y) : -1;
   if (index >= 0 && index < static_cast<int>(tasks_.size())) {
+    if (confirm_) {
+      plugin_->ask_to_tick(entity_, tasks_[index]);  // the popup's yes ticks it, through ticked()
+      return;
+    }
     toggle(entity_, tasks_[index]);
     layout();
     ask_at_ = tessera::epoch() + AFTER_TAP;
@@ -402,6 +418,14 @@ void TaskTile::on_tap() {
   // Anywhere else: the whole list on a card, under the tile's name or else the list's own.
   const std::string title = roomy::plain(name_.empty() ? list_name_ : name_);
   tessera::open_card(plugin_->plugin_id(), "list", roomy::plain(entity_), tile_, title);
+}
+
+void TaskTile::ticked(const char *uid, const char *text, bool done) {
+  const int i = find(tasks_, uid, text);
+  if (i < 0) return;
+  tasks_[i].completed = done;
+  layout();
+  ask_at_ = tessera::epoch() + AFTER_TAP;
 }
 
 void TaskTile::on_tick(uint32_t epoch) {
@@ -429,6 +453,7 @@ void ListCard::open(const tessera::CardContext &c) {
   entity_ = roomy::text(std::string(c.entity ? c.entity : ""));
   plugin_->card_ = this;
   tick_off_ = plugin_->tick_off(c.tile);
+  confirm_ = plugin_->confirm(c.tile);
 
   const Font title = Font::BODY_LARGE;
   foot_ = std::max(ui::mm(10), ui::line_height(Font::BODY) + 2 * pad());
@@ -527,8 +552,20 @@ void ListCard::on_tap() {
   }
   const int index = tick_off_ ? rows_.task_at(p.y) : -1;
   if (index < 0 || index >= static_cast<int>(tasks_.size())) return;
+  if (confirm_) {
+    plugin_->ask_to_tick(entity_, tasks_[index]);
+    return;
+  }
   toggle(entity_, tasks_[index]);
   rows_.show(tasks_, starts_.empty() ? 0 : starts_[page_index_], height_ - foot_);  // in place: nothing moves yet
+  ask_at_ = tessera::epoch() + AFTER_TAP;
+}
+
+void ListCard::ticked(const char *uid, const char *text, bool done) {
+  const int i = find(tasks_, uid, text);
+  if (i < 0) return;
+  tasks_[i].completed = done;
+  rows_.show(tasks_, starts_.empty() ? 0 : starts_[page_index_], height_ - foot_);
   ask_at_ = tessera::epoch() + AFTER_TAP;
 }
 
@@ -545,6 +582,65 @@ void ListCard::on_theme() {
   ui::set_fill(rule_, Tone::NORMAL, theme::LINE);
 }
 
+// ---- The popup that asks first ----
+
+ConfirmTick::ConfirmTick(HaTaskList *plugin, const std::string &entity, const TaskItem &task)
+    : plugin_(plugin), entity_(roomy::text(entity)), task_(task) {}
+
+void ConfirmTick::open(const tessera::PopupContext &c) {
+  width_ = c.width;
+  gap_ = ui::px(ui::large() ? 12 : 8);
+  const bool done = !task_.completed;  // what yes makes of it
+  // The question on the close key's line, then the task's name (two lines at most), then the keys.
+  const int title = ui::line_height(Font::TITLE), first = std::max(c.key, title);
+  question_ = ui::label(c.parent, Font::TITLE, theme::INK);
+  lv_obj_set_width(question_, std::max(1, c.width - c.corner));
+  lv_obj_set_pos(question_, 0, (first - title) / 2);
+  ui::set_text(question_, plugin_->text(done ? "confirm_done" : "confirm_open"));
+  const int body = ui::line_height(Font::BODY_LARGE);
+  const int lines = ui::text_width(task_.text, Font::BODY_LARGE) > c.width ? 2 : 1;
+  name_ = ui::text(c.parent, Font::BODY_LARGE, theme::INK);
+  lv_obj_set_size(name_, c.width, lines * body);
+  lv_obj_set_pos(name_, 0, first + gap_);
+  ui::set_text(name_, task_.text);
+  keys_y_ = first + gap_ + lines * body + 2 * gap_;
+  keys_h_ = std::max(ui::mm(10), body + 2 * gap_);
+  const int key_w = (c.width - gap_) / 2;
+  no_ = ui::block(c.parent, theme::BUTTON);
+  lv_obj_set_size(no_, key_w, keys_h_);
+  lv_obj_set_pos(no_, 0, keys_y_);
+  no_label_ = ui::label(no_, Font::BODY_LARGE, theme::INK);
+  ui::set_text(no_label_, plugin_->text("cancel"));
+  lv_obj_center(no_label_);
+  yes_ = ui::block(c.parent, theme::ACCENT);
+  lv_obj_set_size(yes_, key_w, keys_h_);
+  lv_obj_set_pos(yes_, c.width - key_w, keys_y_);
+  yes_label_ = ui::label(yes_, Font::BODY_LARGE, theme::ON_ACCENT);
+  ui::set_text(yes_label_, plugin_->text(done ? "tick" : "untick"));
+  lv_obj_center(yes_label_);
+}
+
+void ConfirmTick::on_tap() {
+  const auto p = tessera::tap_point();
+  if (p.y < keys_y_ || p.y >= keys_y_ + keys_h_) return;  // the question or the name: nothing
+  const int key_w = (width_ - gap_) / 2;
+  if (p.x >= width_ - key_w) {
+    plugin_->tick(roomy::plain(entity_), task_.uid, task_.text, !task_.completed);
+  } else if (p.x >= key_w) {
+    return;  // the gap between the keys
+  }
+  tessera::close_popup(plugin_);
+}
+
+void ConfirmTick::on_theme() {
+  ui::set_color(question_, theme::INK);
+  ui::set_color(name_, theme::INK);
+  ui::set_fill(no_, Tone::NORMAL, theme::BUTTON);
+  ui::set_color(no_label_, theme::INK);
+  ui::set_fill(yes_, Tone::NORMAL, theme::ACCENT);
+  ui::set_color(yes_label_, theme::ON_ACCENT);
+}
+
 // ---- The plugin ----
 
 void HaTaskList::setup() {
@@ -554,21 +650,40 @@ void HaTaskList::setup() {
 
 void HaTaskList::add(TaskTile *tile) { tiles_.push_back(tile); }
 
-void HaTaskList::set_tick_off(int tile, bool on) {
-  for (auto &t : tick_off_)
-    if (t.tile == tile) {
-      t.on = on;
+void HaTaskList::set_choices(int tile, bool tick_off, bool confirm) {
+  for (auto &c : choices_)
+    if (c.tile == tile) {
+      c.tick_off = tick_off;
+      c.confirm = confirm;
       return;
     }
-  tick_off_.push_back({tile, on});
+  choices_.push_back({tile, tick_off, confirm});
 }
 
-// A card opened some other way than from a tile of this plugin (no index, or one never seen) lets tasks be ticked off,
-// as the option's default does.
+// A card opened some other way than from a tile of this plugin (no index, or one never seen) does what the options'
+// defaults do: ticks tasks off, without asking.
 bool HaTaskList::tick_off(int tile) const {
-  for (const auto &t : tick_off_)
-    if (t.tile == tile) return t.on;
+  for (const auto &c : choices_)
+    if (c.tile == tile) return c.tick_off;
   return true;
+}
+
+bool HaTaskList::confirm(int tile) const {
+  for (const auto &c : choices_)
+    if (c.tile == tile) return c.confirm;
+  return false;
+}
+
+void HaTaskList::ask_to_tick(const tessera::Text &entity, const TaskItem &task) {
+  const std::string list = roomy::plain(entity);
+  tessera::show_popup(this, [this, list, task]() { return new ConfirmTick(this, list, task); });
+}
+
+void HaTaskList::tick(const std::string &entity, const char *uid, const char *text, bool done) {
+  if (!send_status(entity, uid, text, done)) return;
+  for (auto *tile : tiles_)
+    if (roomy::plain(tile->entity()) == entity) tile->ticked(uid, text, done);
+  if (card_ && roomy::plain(card_->entity()) == entity) card_->ticked(uid, text, done);
 }
 
 void HaTaskList::remove(TaskTile *tile) {
